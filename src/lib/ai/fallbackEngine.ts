@@ -70,20 +70,21 @@ class FallbackProvider implements AIProvider {
     const title = request.context?.professionalTitle?.trim() || 'professional';
     const years = request.context?.yearsOfExperience;
     const yearsPhrase = years && years > 0 ? `${years}+ years of experience` : 'hands-on experience';
-    const skillsPhrase =
+    const skills =
       request.context?.existingSkills && request.context.existingSkills.length > 0
-        ? ` skilled in ${request.context.existingSkills.slice(0, 3).join(', ')}`
-        : '';
-    const value = profile.valuePropositions[0];
+        ? request.context.existingSkills.slice(0, 5)
+        : profile.suggestedSkills.slice(0, 4);
+    const industryPhrase = request.context?.industry ? ` within the ${request.context.industry} sector` : '';
 
     const suggestedText =
-      `${titleCaseFirst(title)} with ${yearsPhrase}${skillsPhrase}, known for ${value}. ` +
-      `Focused on ${profile.themes.slice(0, 2).join(' and ')}, with a reliable, detail-oriented approach to every role. ` +
-      `[Add one specific, measurable result you're proud of — e.g. "improved X by Y%" — to strengthen this further.]`;
+      `${titleCaseFirst(title)} with ${yearsPhrase}${industryPhrase}, bringing practical capability in ${skills.join(', ')}. ` +
+      `Experienced in supporting ${profile.themes.slice(0, 3).join(', ')}, with a strong focus on ${profile.themes.slice(3, 5).join(' and ')}. ` +
+      `Known for ${profile.valuePropositions[0]} and for approaching each assignment with professionalism, accuracy and consistent attention to detail. ` +
+      `Combines clear communication, dependable teamwork and an adaptable working style to understand business needs, deliver high-quality work and contribute positively in fast-paced, multicultural UAE workplaces.`;
 
     return {
       suggestedText,
-      reason: `Built from your title and the ${profile.label} profession profile. Replace the bracketed placeholder with a real, truthful measurable result — the fallback engine never invents metrics.`,
+      reason: `A complete professional summary tailored to your title and the ${profile.label} profile, using qualitative strengths without inventing metrics.`,
       source: 'fallback',
     };
   }
@@ -151,15 +152,15 @@ class FallbackProvider implements AIProvider {
     const profile = PROFESSION_PROFILES[professionId];
     const verbs = profile.achievementVerbs;
     const templates = [
-      `${verbs[0]} [specific task] which resulted in [measurable outcome — e.g. a % or time saved]`,
-      `${verbs[1]} [process or responsibility] for [team/department size or scope]`,
-      `${verbs[2]} [initiative] that improved [specific metric] by [amount — only if true]`,
+      `${verbs[0]} key ${profile.themes[0]} activities while maintaining consistent quality and professional standards.`,
+      `${verbs[1]} day-to-day work related to ${profile.themes[1]}, helping tasks progress efficiently and accurately.`,
+      `${verbs[2]} service delivery through careful attention to ${profile.themes[2]} and timely follow-up.`,
+      `${verbs[3]} effectively with colleagues and stakeholders to support ${profile.themes[3] ?? 'team objectives'}.`,
     ];
     return {
       suggestedText: templates.join('\n'),
       suggestedItems: templates,
-      reason:
-        'These are editable templates, not finished statements — fill in the brackets with real, truthful details. The fallback engine never invents numbers or outcomes on your behalf.',
+      reason: `Complete achievement-style statements tailored to ${profile.label}, written without fabricated numbers or placeholders.`,
       source: 'fallback',
     };
   }
@@ -168,7 +169,16 @@ class FallbackProvider implements AIProvider {
     const profile = PROFESSION_PROFILES[professionId];
     const base = stripFillerWords(request.text);
     if (!base) {
-      return { suggestedText: '', reason: 'Add some text first, then try again.', source: 'fallback' };
+      const statements = profile.themes.slice(0, 4).map((theme, index) => {
+        const verb = profile.achievementVerbs[index % profile.achievementVerbs.length];
+        return `${verb} ${theme} activities with consistent attention to quality, accuracy and timely completion.`;
+      });
+      return {
+        suggestedText: statements.join('\n'),
+        suggestedItems: statements,
+        reason: `Professional responsibility statements tailored to ${profile.label}.`,
+        source: 'fallback',
+      };
     }
     const verb = profile.achievementVerbs[Math.floor(Math.random() * profile.achievementVerbs.length)];
     const startsWithVerb = /^[A-Z][a-z]+ed\b|^[A-Z][a-z]+d\b/.test(base);

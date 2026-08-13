@@ -51,7 +51,7 @@ export class OpenAIProvider implements AIProvider {
       const content = data.choices?.[0]?.message?.content;
       if (!content) throw new AIProviderError('Empty response from OpenAI', 'invalid_response');
 
-      return parseModelJson(content);
+      return parseModelJson(content, request);
     } catch (err) {
       if (err instanceof AIProviderError) throw err;
       if (err instanceof Error && err.name === 'AbortError') {
@@ -64,16 +64,32 @@ export class OpenAIProvider implements AIProvider {
   }
 }
 
-function parseModelJson(text: string): AISuggestionResult {
+const ADVICE_OR_PLACEHOLDER = /\[[^\]]*\]|\b(add|replace|mention|specify|include|if applicable|for example|e\.g\.)\b/i;
+
+function parseModelJson(text: string, request: AISuggestRequest): AISuggestionResult {
   try {
     const parsed = JSON.parse(text);
     if (typeof parsed.suggestedText !== 'string' || typeof parsed.reason !== 'string') {
       throw new Error('missing fields');
     }
+    const rawItems = Array.isArray(parsed.suggestedItems)
+      ? parsed.suggestedItems.filter((item: unknown): item is string => typeof item === 'string')
+      : [];
+    const suggestedItems = rawItems
+      .map((item: string) => item.trim())
+      .filter((item: string) => item.length > 1 && !ADVICE_OR_PLACEHOLDER.test(item));
+
+    if (ADVICE_OR_PLACEHOLDER.test(parsed.suggestedText)) {
+      throw new Error('response contains placeholder or editing advice');
+    }
+
     return {
       suggestedText: parsed.suggestedText,
       reason: parsed.reason,
-      suggestedItems: Array.isArray(parsed.suggestedItems) ? parsed.suggestedItems : undefined,
+      suggestedItems:
+        request.field === 'summary' || request.field === 'professionalTitle' || suggestedItems.length === 0
+          ? undefined
+          : suggestedItems,
       source: 'ai',
     };
   } catch {

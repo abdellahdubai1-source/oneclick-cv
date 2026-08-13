@@ -56,6 +56,10 @@ export default function AISuggestBox({ field, text, context, onApply, onApplyIte
   const [showPrivacy, setShowPrivacy] = useState(false);
 
   const actions = DEFAULT_ACTIONS[field];
+  const insertableItems =
+    result?.suggestedItems && onApplyItem && field !== 'summary' && field !== 'professionalTitle'
+      ? result.suggestedItems
+      : [];
 
   function requestAction(action: AISuggestRequest['action']) {
     setPendingAction(action);
@@ -151,9 +155,9 @@ export default function AISuggestBox({ field, text, context, onApply, onApplyIte
             )}
           </div>
 
-          {result.suggestedItems && result.suggestedItems.length > 0 ? (
+          {insertableItems.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {result.suggestedItems.map((item) => (
+              {insertableItems.map((item) => (
                 <button
                   key={item}
                   type="button"
@@ -164,7 +168,9 @@ export default function AISuggestBox({ field, text, context, onApply, onApplyIte
                 </button>
               ))}
             </div>
-          ) : (
+          )}
+
+          {editableText && (
             <textarea
               value={editableText}
               onChange={(e) => setEditableText(e.target.value)}
@@ -175,7 +181,7 @@ export default function AISuggestBox({ field, text, context, onApply, onApplyIte
 
           <p className="text-[11px] leading-relaxed text-ink-500">{result.reason}</p>
 
-          {!result.suggestedItems && (
+          {editableText && (
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -193,7 +199,7 @@ export default function AISuggestBox({ field, text, context, onApply, onApplyIte
               </button>
             </div>
           )}
-          {result.suggestedItems && (
+          {insertableItems.length > 0 && !editableText && (
             <div className="flex justify-end">
               <button type="button" onClick={handleReject} className="text-[11px] font-semibold text-ink-500 hover:underline">
                 Dismiss

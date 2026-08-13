@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fallbackProvider } from '@/lib/ai/fallbackEngine';
 
 describe('fallbackProvider', () => {
-  it('never invents a numeric achievement — leaves an editable placeholder instead', async () => {
+  it('creates a substantial copy-ready summary without placeholders or invented metrics', async () => {
     const result = await fallbackProvider.suggest({
       action: 'create_summary',
       field: 'summary',
@@ -10,10 +10,22 @@ describe('fallbackProvider', () => {
       context: { professionalTitle: 'Sales Executive', profession: 'sales', yearsOfExperience: 4 },
     });
     expect(result.source).toBe('fallback');
-    expect(result.suggestedText).toMatch(/\[add a specific|\[.*result/i);
-    // Should not contain a fabricated percentage or metric outside the bracketed placeholder.
-    const withoutPlaceholder = result.suggestedText.replace(/\[[^\]]*\]/g, '');
-    expect(withoutPlaceholder).not.toMatch(/\d+%/);
+    expect(result.suggestedText.split(/\s+/).length).toBeGreaterThanOrEqual(70);
+    expect(result.suggestedText).not.toMatch(/[\[\]]/);
+    expect(result.suggestedText).not.toMatch(/\d+%/);
+    expect(result.suggestedText).not.toMatch(/\b(add|replace|specify)\b/i);
+  });
+
+  it('returns complete achievement statements without editing instructions', async () => {
+    const result = await fallbackProvider.suggest({
+      action: 'generate_achievements',
+      field: 'achievement',
+      text: '',
+      context: { profession: 'web_design' },
+    });
+    expect(result.suggestedItems).toHaveLength(4);
+    expect(result.suggestedText).not.toMatch(/[\[\]]/);
+    expect(result.suggestedText).not.toMatch(/\b(add|replace|specify)\b/i);
   });
 
   it('produces distinct suggested skills per profession (cleaning vs web design)', async () => {
