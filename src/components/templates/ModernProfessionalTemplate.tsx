@@ -6,7 +6,8 @@ const SIDEBAR_SECTIONS = new Set(['skills', 'languages', 'certifications']);
 /**
  * Modern Professional — strong two-column layout with a coloured left
  * sidebar (contact, languages, skills). Work experience on the right.
- * Rounded-square photo at the top of the sidebar.
+ * Large circular photo at the top of the sidebar. The reading order remains
+ * deterministic and the exported DOCX is always the single-column ATS copy.
  */
 export default function ModernProfessionalTemplate({ cv, color, mode = 'preview' }: TemplateProps) {
   const lang = cv.meta.language;
@@ -21,23 +22,23 @@ export default function ModernProfessionalTemplate({ cv, color, mode = 'preview'
     <div dir={rtl ? 'rtl' : 'ltr'} className="flex min-h-a4 w-full bg-white font-sans text-ink-900">
       {/* Sidebar */}
       <aside
-        className="flex w-[34%] shrink-0 flex-col gap-6 px-5 py-8"
+        className="flex w-[36%] shrink-0 flex-col gap-6 px-6 py-9"
         style={{ background: color.primary, color: color.onPrimary }}
       >
         <div className="flex flex-col items-center text-center">
           <Avatar
             src={photoSrc}
-            shape="rounded-square"
-            sizeClass={mode === 'print' ? 'w-32 h-32' : 'w-24 h-24'}
-            ringColor="rgba(255,255,255,0.35)"
+            shape="circle"
+            sizeClass={mode === 'print' ? 'w-36 h-36' : 'w-28 h-28'}
+            ringColor="rgba(255,255,255,0.8)"
             alt={cv.personal.fullName || 'Profile photo'}
           />
-          <h1 className="mt-3 text-lg font-bold leading-tight">{cv.personal.fullName || 'Your Name'}</h1>
-          <p className="text-[12px] font-light opacity-90">{cv.personal.professionalTitle || 'Professional Title'}</p>
+          <h1 className="mt-4 text-xl font-bold leading-tight tracking-tight">{cv.personal.fullName || 'Your Name'}</h1>
+          <p className="mt-1 text-[12px] font-medium opacity-85">{cv.personal.professionalTitle || 'Professional Title'}</p>
         </div>
 
         <div>
-          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider opacity-75">Contact</p>
+          <p className="mb-2 border-b border-white/30 pb-1.5 text-[11px] font-bold uppercase tracking-[0.16em]">Contact</p>
           <ul className="space-y-1 text-[11.5px] leading-relaxed opacity-95">
             {cv.personal.phone && <li>{cv.personal.phone}</li>}
             {cv.personal.email && <li className="break-words">{cv.personal.email}</li>}
@@ -63,7 +64,7 @@ export default function ModernProfessionalTemplate({ cv, color, mode = 'preview'
 
         {sidebarSections.map((section) => (
           <div key={section}>
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider opacity-75">
+            <p className="mb-2 border-b border-white/30 pb-1.5 text-[11px] font-bold uppercase tracking-[0.16em]">
               {sectionLabel(section, lang)}
             </p>
             {section === 'skills' && (
@@ -105,11 +106,11 @@ export default function ModernProfessionalTemplate({ cv, color, mode = 'preview'
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 space-y-5 px-7 py-8">
+      <main className="flex-1 space-y-6 px-8 py-10">
         {mainSections.map((section) => (
           <section key={section} className="break-inside-avoid">
             <h2
-              className="mb-2 border-b-2 pb-1 text-[13px] font-bold uppercase tracking-wide"
+              className="mb-3 border-b pb-1.5 text-[13px] font-bold uppercase tracking-[0.08em]"
               style={{ borderColor: color.primary, color: color.primary }}
             >
               {sectionLabel(section, lang)}

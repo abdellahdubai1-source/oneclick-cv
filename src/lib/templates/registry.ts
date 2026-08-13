@@ -42,20 +42,20 @@ export const TEMPLATE_REGISTRY: Record<TemplateId, TemplateDefinition> = {
   },
   'modern-professional': {
     id: 'modern-professional',
-    name: 'Modern Professional',
-    tagline: 'Confident two-column structure',
+    name: 'Signature Sidebar',
+    tagline: 'Elegant, clear and recruiter-friendly',
     description:
-      'A strong coloured sidebar carries contact details, languages and skills while work experience takes the spotlight on the right.',
+      'A polished dark sidebar with a circular portrait, contact details and skills, paired with a clean white content area for profile, experience and education.',
     layout: 'sidebar-left',
-    bestFor: ['General UAE applications', 'Mid-level professionals'],
+    bestFor: ['UAE applications', 'Corporate roles', 'Technical professionals'],
     photo: {
       enabledByDefault: true,
-      shape: 'rounded-square',
-      sizeClass: 'w-28 h-28',
+      shape: 'circle',
+      sizeClass: 'w-32 h-32',
       position: 'sidebar-top',
       showsAtsWarningWhenEnabled: false,
     },
-    atsFriendly: false,
+    atsFriendly: true,
   },
   'minimal-ats': {
     id: 'minimal-ats',

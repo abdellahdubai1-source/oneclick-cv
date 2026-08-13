@@ -195,9 +195,9 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
     return (
       <Document title={cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'pdf')} author={cv.personal.fullName}>
         <Page size="A4" style={{ ...styles.page, padding: 0, flexDirection: 'row' }}>
-          <View style={{ width: '34%', backgroundColor: color.primary, padding: 20 }}>
+          <View style={{ width: '36%', backgroundColor: color.primary, padding: 22 }}>
             {photoSrc && (
-              <Image src={photoSrc} style={{ width: 72, height: 72, borderRadius: 12, alignSelf: 'center', marginBottom: 10 }} />
+              <Image src={photoSrc} style={{ width: 88, height: 88, borderRadius: 44, alignSelf: 'center', marginBottom: 12, borderWidth: 2, borderColor: '#ffffff' }} />
             )}
             <Text style={{ fontFamily: FONT_FAMILY_BOLD, fontSize: 15, color: '#ffffff', textAlign: 'center' }}>
               {cv.personal.fullName || 'Your Name'}
@@ -236,7 +236,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
               </View>
             ))}
           </View>
-          <View style={{ flex: 1, padding: 22 }}>
+          <View style={{ flex: 1, padding: 26 }}>
             {main.map((section) => (
               <SectionBlock key={section} cv={cv} section={section} styles={styles} />
             ))}

@@ -80,7 +80,10 @@ export function buildATSPlainText(cv: CVDocument): string {
 
 export default function ATSTextPreview({ cv }: { cv: CVDocument }) {
   const text = useMemo(() => buildATSPlainText(cv), [cv]);
-  const risky = useMemo(() => cv.template.templateId !== 'minimal-ats', [cv.template.templateId]);
+  const risky = useMemo(
+    () => !['minimal-ats', 'modern-professional', 'technical-professional'].includes(cv.template.templateId),
+    [cv.template.templateId],
+  );
 
   return (
     <div className="space-y-3">
