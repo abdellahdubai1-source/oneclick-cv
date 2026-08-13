@@ -69,6 +69,12 @@ export function generateCoverLetter(
 
   const middleParagraph = `${skillsClause}${requirementsClause} I take pride in ${profile.valuePropositions[1] ?? profile.valuePropositions[0]}.`;
 
+  const evidence = [
+    candidate.recentRole ? `In my recent work as ${candidate.recentRole}, I applied these strengths in practical, client-focused work.` : '',
+    candidate.confirmedAchievements?.[0] ? ` One relevant result from my CV is: ${truncate(candidate.confirmedAchievements[0], 190)}` : '',
+    candidate.projects?.[0] ? ` My experience also includes the project “${truncate(candidate.projects[0], 100)}”.` : '',
+  ].join('').trim();
+
   const reasonParagraph = input.reasonForApplying
     ? `${truncate(input.reasonForApplying, 400)}`
     : `I am particularly drawn to ${input.companyName || 'your organisation'} and would welcome the opportunity to bring my ${professionLabel.toLowerCase()} experience to your team.`;
@@ -80,7 +86,7 @@ export function generateCoverLetter(
     .filter(Boolean)
     .join(' | ');
 
-  const paragraphs = [opener, middleParagraph, reasonParagraph];
+  const paragraphs = [opener, middleParagraph, evidence, reasonParagraph].filter(Boolean);
 
   const fullText = [
     date,

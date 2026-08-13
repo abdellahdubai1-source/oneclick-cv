@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
 import type { LanguageProficiency } from '@/lib/cv/types';
-import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
+import { inferProfessionFromTitle, PROFESSION_PROFILES } from '@/lib/cv/professionProfiles';
 
 const PROFICIENCIES: LanguageProficiency[] = ['basic', 'conversational', 'fluent', 'native'];
 
@@ -19,11 +19,15 @@ export default function SkillsLanguagesForm() {
   const [techInput, setTechInput] = useState('');
   const [softInput, setSoftInput] = useState('');
   const [langInput, setLangInput] = useState('');
+  const profile = PROFESSION_PROFILES[inferProfessionFromTitle(cv.personal.professionalTitle)];
 
   return (
     <div className="space-y-6">
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-ink-900">Technical Skills</h2>
+        <p className="mt-2 text-xs text-ink-500">
+          Example for {profile.label}: {profile.suggestedSkills.slice(0, 5).join(' · ') || 'Add role-specific tools and systems you genuinely use.'}
+        </p>
         <SkillEditor
           items={cv.skills.technical}
           value={techInput}
@@ -48,6 +52,9 @@ export default function SkillsLanguagesForm() {
 
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-ink-900">Soft Skills</h2>
+        <p className="mt-2 text-xs text-ink-500">
+          Example: {profile.suggestedSoftSkills.slice(0, 5).join(' · ')}
+        </p>
         <SkillEditor
           items={cv.skills.soft}
           value={softInput}
@@ -55,6 +62,19 @@ export default function SkillsLanguagesForm() {
           onAdd={(name) => addSkill('soft', { name })}
           onRemove={(id) => removeSkill('soft', id)}
         />
+        <div className="mt-3">
+          <AISuggestBox
+            field="skills"
+            text=""
+            context={{
+              professionalTitle: cv.personal.professionalTitle,
+              profession: inferProfessionFromTitle(cv.personal.professionalTitle),
+              existingSkills: [...cv.skills.technical, ...cv.skills.soft].map((s) => s.name),
+            }}
+            onApply={() => {}}
+            onApplyItem={(item) => addSkill('soft', { name: item })}
+          />
+        </div>
       </div>
 
       <div className="card p-6">

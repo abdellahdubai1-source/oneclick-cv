@@ -17,6 +17,7 @@ import TemplateStep from './sections/TemplateStep';
 import ATSStep from './sections/ATSStep';
 import ReviewStep from './sections/ReviewStep';
 import DownloadStep from './sections/DownloadStep';
+import CertificationsForm from './sections/CertificationsForm';
 
 function StepContent({ step }: { step: BuilderStepId }) {
   if (step === 'personal') return <PersonalDetailsForm />;
@@ -24,7 +25,7 @@ function StepContent({ step }: { step: BuilderStepId }) {
     return <div className="space-y-6"><ExperienceForm /><EducationForm /></div>;
   }
   if (step === 'skills') {
-    return <div className="space-y-6"><SummaryForm /><SkillsLanguagesForm /></div>;
+    return <div className="space-y-6"><SummaryForm /><SkillsLanguagesForm /><CertificationsForm /></div>;
   }
   return (
     <div className="space-y-6">

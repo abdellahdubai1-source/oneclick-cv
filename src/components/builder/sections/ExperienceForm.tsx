@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import type { WorkExperienceEntry } from '@/lib/cv/types';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
-import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
+import { inferProfessionFromTitle, PROFESSION_PROFILES } from '@/lib/cv/professionProfiles';
 
 export default function ExperienceForm() {
   const cv = useCVStore((s) => s.cv);
@@ -168,10 +168,17 @@ function BulletList({
   const exp = useCVStore((s) => s.cv.experience.find((e) => e.id === entryId));
   const professionalTitle = useCVStore((s) => s.cv.personal.professionalTitle);
   const existingSkills = useCVStore((s) => [...s.cv.skills.technical, ...s.cv.skills.soft].map((skill) => skill.name));
+  const profile = PROFESSION_PROFILES[inferProfessionFromTitle(exp?.jobTitle || professionalTitle)];
+  const example = aiField === 'achievement'
+    ? `${profile.achievementVerbs[0]} [task/result] and improved [confirmed metric or outcome].`
+    : `${profile.achievementVerbs[0]} ${profile.themes.slice(0, 2).join(' and ')} while maintaining professional standards.`;
 
   return (
     <div>
       <p className="mb-1.5 text-xs font-medium text-ink-600">{label}</p>
+      <p className="mb-2 rounded-lg bg-brand-50 px-3 py-2 text-[11px] leading-relaxed text-brand-700">
+        <span className="font-semibold">Example for {profile.label}:</span> {example}
+      </p>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div key={i} className="flex gap-2">

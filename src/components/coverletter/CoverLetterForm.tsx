@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { PROFESSION_LIST } from '@/lib/cv/professionProfiles';
+import { PROFESSION_LIST, inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
 import type { ProfessionId } from '@/lib/cv/professionProfiles';
 import { generateCoverLetter } from '@/lib/coverLetter/generator';
 import type { CoverLetterInput, CoverLetterTone, ExperienceLevel } from '@/lib/coverLetter/types';
@@ -23,8 +23,11 @@ const LEVELS: { id: ExperienceLevel; label: string }[] = [
 
 export default function CoverLetterForm() {
   const cv = useCVStore((s) => s.cv);
-  const [profession, setProfession] = useState<ProfessionId>('custom');
-  const [customProfessionLabel, setCustomProfessionLabel] = useState('');
+  const inferredProfession = inferProfessionFromTitle(cv.personal.professionalTitle);
+  const [profession, setProfession] = useState<ProfessionId>(inferredProfession);
+  const [customProfessionLabel, setCustomProfessionLabel] = useState(
+    inferredProfession === 'custom' ? cv.personal.professionalTitle : '',
+  );
   const [positionTitle, setPositionTitle] = useState(cv.personal.professionalTitle);
   const [companyName, setCompanyName] = useState('');
   const [hiringManagerName, setHiringManagerName] = useState('');
@@ -76,8 +79,12 @@ export default function CoverLetterForm() {
         email: cv.personal.email,
         city: cv.personal.city,
         country: cv.personal.country,
+        summary: cv.summary,
+        recentRole: cv.experience[0] ? `${cv.experience[0].jobTitle} at ${cv.experience[0].companyName}` : undefined,
+        confirmedAchievements: cv.experience.flatMap((role) => role.achievements).filter(Boolean).slice(0, 3),
+        projects: cv.projects.map((project) => project.name).filter(Boolean).slice(0, 3),
       }),
-    [input, cv.personal],
+    [input, cv],
   );
 
   const displayText = editableText ?? generated.fullText;
@@ -105,6 +112,12 @@ export default function CoverLetterForm() {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="space-y-6">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
+          <p className="font-semibold">Generated from your current CV</p>
+          <p className="mt-1 text-xs leading-relaxed">
+            Your name, contact details, profession, confirmed skills, experience, achievements and projects are reused automatically. Add a job description for a more tailored letter.
+          </p>
+        </div>
         <FormSection title="Role details">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Profession">

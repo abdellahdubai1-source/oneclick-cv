@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import { TEMPLATE_REGISTRY } from '@/lib/templates/registry';
+import Link from 'next/link';
 
 export default function DownloadStep() {
   const cv = useCVStore((s) => s.cv);
@@ -82,6 +83,9 @@ export default function DownloadStep() {
         <button type="button" onClick={handleDocx} disabled={docxBusy} className="btn-secondary">
           {docxBusy ? 'Preparing DOCX…' : 'Download DOCX (ATS-friendly)'}
         </button>
+        <Link href="/cover-letter" className="btn-secondary">
+          Generate matching cover letter →
+        </Link>
       </div>
 
       <div className="mt-6 rounded-xl bg-ink-50 p-4 text-xs leading-relaxed text-ink-500">

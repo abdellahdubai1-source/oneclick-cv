@@ -2,7 +2,7 @@
 
 import { useCVStore } from '@/lib/state/cvStore';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
-import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
+import { inferProfessionFromTitle, PROFESSION_PROFILES } from '@/lib/cv/professionProfiles';
 
 export default function SummaryForm() {
   const cv = useCVStore((s) => s.cv);
@@ -10,12 +10,16 @@ export default function SummaryForm() {
   const applyTextWithUndo = useCVStore((s) => s.applyTextWithUndo);
   const undoLastChange = useCVStore((s) => s.undoLastChange);
   const lastUndo = useCVStore((s) => s.lastUndo);
+  const profile = PROFESSION_PROFILES[inferProfessionFromTitle(cv.personal.professionalTitle)];
 
   return (
     <div className="card p-6">
       <h2 className="text-lg font-semibold text-ink-900">Professional Summary</h2>
       <p className="mt-1 text-sm text-ink-500">
         2–4 sentences that introduce who you are professionally. This is often the first thing a recruiter reads.
+      </p>
+      <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs leading-relaxed text-brand-700">
+        <span className="font-semibold">Example for {profile.label}:</span> {`Results-focused ${cv.personal.professionalTitle || profile.label} with hands-on experience in ${profile.themes.slice(0, 3).join(', ')}. Known for ${profile.valuePropositions[0]}.`}
       </p>
 
       <textarea

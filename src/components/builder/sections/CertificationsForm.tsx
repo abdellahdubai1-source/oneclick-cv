@@ -1,6 +1,8 @@
 'use client';
 
 import { useCVStore } from '@/lib/state/cvStore';
+import AISuggestBox from '@/components/builder/ai/AISuggestBox';
+import { inferProfessionFromTitle, PROFESSION_PROFILES } from '@/lib/cv/professionProfiles';
 
 export default function CertificationsForm() {
   const cv = useCVStore((s) => s.cv);
@@ -13,6 +15,8 @@ export default function CertificationsForm() {
   const addReference = useCVStore((s) => s.addReference);
   const updateReference = useCVStore((s) => s.updateReference);
   const removeReference = useCVStore((s) => s.removeReference);
+  const profession = inferProfessionFromTitle(cv.personal.professionalTitle);
+  const profile = PROFESSION_PROFILES[profession];
 
   return (
     <div className="space-y-6">
@@ -22,6 +26,9 @@ export default function CertificationsForm() {
           <button type="button" onClick={addCertification} className="btn-secondary">+ Add certification</button>
         </div>
         <div className="mt-4 space-y-3">
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700">
+            <span className="font-semibold">Example:</span> Google UX Design Certificate — Google · 2025
+          </p>
           {cv.certifications.map((c) => (
             <div key={c.id} className="grid grid-cols-1 gap-3 rounded-xl border border-ink-100 p-4 sm:grid-cols-2">
               <input className="input" placeholder="Certification name" value={c.name} onChange={(e) => updateCertification(c.id, { name: e.target.value })} />
@@ -45,15 +52,37 @@ export default function CertificationsForm() {
           <button type="button" onClick={addProject} className="btn-secondary">+ Add project</button>
         </div>
         <div className="mt-4 space-y-3">
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-xs leading-relaxed text-brand-700">
+            <span className="font-semibold">Example for {profile.label}:</span> Add the project goal, what you personally did, the tools used and a confirmed result.
+          </p>
           {cv.projects.map((p) => (
             <div key={p.id} className="space-y-2 rounded-xl border border-ink-100 p-4">
               <input className="input" placeholder="Project name" value={p.name} onChange={(e) => updateProject(p.id, { name: e.target.value })} />
               <textarea className="input" rows={2} placeholder="Short description" value={p.description} onChange={(e) => updateProject(p.id, { description: e.target.value })} />
+              <AISuggestBox
+                field="responsibility"
+                text={p.description}
+                context={{
+                  professionalTitle: cv.personal.professionalTitle,
+                  profession,
+                  industry: profile.label,
+                  existingSkills: [...cv.skills.technical, ...cv.skills.soft].map((skill) => skill.name),
+                }}
+                onApply={(description) => updateProject(p.id, { description })}
+                compact
+              />
               <input
                 className="input"
                 placeholder="Technologies used (comma-separated)"
                 value={p.technologies.join(', ')}
                 onChange={(e) => updateProject(p.id, { technologies: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })}
+              />
+              <input
+                className="input"
+                type="url"
+                placeholder="Project or live website URL (optional)"
+                value={p.url ?? ''}
+                onChange={(e) => updateProject(p.id, { url: e.target.value })}
               />
               <div className="flex justify-end">
                 <button type="button" onClick={() => removeProject(p.id)} className="text-xs font-semibold text-red-500 hover:underline">Remove</button>

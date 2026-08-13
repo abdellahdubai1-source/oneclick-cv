@@ -35,8 +35,8 @@ function contentWeight(cv: CVDocument): number {
 
 export function getPdfLayoutScale(cv: CVDocument): LayoutScale {
   const weight = contentWeight(cv);
-  if (weight < 12) return { sectionGap: 17, bodySize: 10.5, bodyLineHeight: 1.58, entryGap: 11 };
-  if (weight < 20) return { sectionGap: 14, bodySize: 10, bodyLineHeight: 1.5, entryGap: 9 };
+  if (weight < 18) return { sectionGap: 21, bodySize: 11, bodyLineHeight: 1.62, entryGap: 13 };
+  if (weight < 24) return { sectionGap: 15, bodySize: 10.25, bodyLineHeight: 1.52, entryGap: 10 };
   return { sectionGap: 11, bodySize: 9.25, bodyLineHeight: 1.42, entryGap: 7 };
 }
 
@@ -165,7 +165,7 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
   const styles = makeSharedStyles(color);
   const sections = getVisibleSections(cv);
   const scale = getPdfLayoutScale(cv);
-  const sparse = contentWeight(cv) < 12;
+  const sparse = contentWeight(cv) < 18;
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
 
   const headerBg = variant === 'ats' ? '#ffffff' : color.primary;
@@ -218,7 +218,7 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
           </Text>
         )}
 
-        <View style={{ paddingHorizontal: sparse ? 40 : PAGE_PADDING, paddingTop: sparse ? 27 : 20 }}>
+        <View style={{ paddingHorizontal: sparse ? 40 : PAGE_PADDING, paddingTop: sparse ? 27 : 20, paddingBottom: sparse ? 34 : 20, flexGrow: 1, justifyContent: sparse ? 'space-between' : 'flex-start' }}>
           {sections.map((section) => (
             <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
           ))}
@@ -238,7 +238,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
   const main = sections.filter((s) => !railSections.includes(s));
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
   const scale = getPdfLayoutScale(cv);
-  const sparse = contentWeight(cv) < 12;
+  const sparse = contentWeight(cv) < 18;
 
   if (variant === 'sidebar') {
     return (
@@ -285,7 +285,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
               </View>
             ))}
           </View>
-          <View style={{ flex: 1, padding: 26 }}>
+          <View style={{ flex: 1, padding: sparse ? 31 : 26, justifyContent: sparse ? 'space-between' : 'flex-start' }}>
             {main.map((section) => (
               <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
             ))}
@@ -315,7 +315,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
           </View>
         </View>
         <View style={{ flexDirection: 'row', flex: 1 }}>
-          <View style={{ width: '68%', padding: sparse ? 28 : 22 }}>
+          <View style={{ width: '68%', padding: sparse ? 28 : 22, justifyContent: sparse ? 'space-between' : 'flex-start' }}>
             {main.map((section) => (
               <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
             ))}

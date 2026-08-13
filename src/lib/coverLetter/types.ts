@@ -24,6 +24,10 @@ export interface CoverLetterCandidate {
   email: string;
   city: string;
   country: string;
+  summary?: string;
+  recentRole?: string;
+  confirmedAchievements?: string[];
+  projects?: string[];
 }
 
 export interface GeneratedCoverLetter {
