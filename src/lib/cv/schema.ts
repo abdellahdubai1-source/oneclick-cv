@@ -262,6 +262,15 @@ export const aiSuggestRequestSchema = z.object({
       yearsOfExperience: z.number().min(0).max(60).optional(),
       industry: z.string().max(100).optional(),
       existingSkills: z.array(z.string().max(60)).max(60).optional(),
+      targetJob: z
+        .object({
+          positionTitle: z.string().max(150),
+          company: z.string().max(150).optional(),
+          summary: z.string().max(1200).optional(),
+          responsibilities: z.array(z.string().max(500)).max(20).optional(),
+          requiredSkills: z.array(z.string().max(60)).max(40).optional(),
+        })
+        .optional(),
     })
     .optional(),
 });

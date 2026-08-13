@@ -51,6 +51,17 @@ export function buildUserPrompt(request: AISuggestRequest): string {
   if (request.context?.existingSkills?.length) {
     parts.push(`Skills already listed: ${request.context.existingSkills.join(', ')}`);
   }
+  if (request.context?.targetJob) {
+    const target = request.context.targetJob;
+    parts.push('Tailor the wording for this target vacancy, while using only facts already present in the candidate text and context.');
+    parts.push(`Target position: ${target.positionTitle}`);
+    if (target.company) parts.push(`Target company: ${target.company}`);
+    if (target.requiredSkills?.length) parts.push(`Vacancy keywords: ${target.requiredSkills.join(', ')}`);
+    if (target.responsibilities?.length) {
+      parts.push(wrapUntrustedContent('TARGET JOB RESPONSIBILITIES', target.responsibilities.join('\n')));
+    }
+    if (target.summary) parts.push(wrapUntrustedContent('TARGET JOB SUMMARY', target.summary));
+  }
   if (request.text) {
     parts.push('');
     parts.push(wrapUntrustedContent('CANDIDATE TEXT', request.text));

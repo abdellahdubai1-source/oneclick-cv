@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCVStore } from '@/lib/state/cvStore';
 import { parseJobPosting, type ParsedJobPosting } from '@/lib/job/jobParsing';
 import { matchCVToJob, type JobMatchResult, type RequirementMatch } from '@/lib/job/matching';
-import { createTailoredCopy } from '@/lib/state/draftStorage';
+import { createTailoredCopy, saveDraft, setActiveDraftId } from '@/lib/state/draftStorage';
+import { applyTailoring } from '@/lib/job/tailoring';
 import { cn } from '@/lib/utils/cn';
 
 type InputMode = 'url' | 'paste' | 'upload';
@@ -18,7 +20,9 @@ const STATUS_STYLES: Record<RequirementMatch['status'], { label: string; classNa
 };
 
 export default function JobMatchClient() {
+  const router = useRouter();
   const cv = useCVStore((s) => s.cv);
+  const replaceCV = useCVStore((s) => s.replaceCV);
   const [mode, setMode] = useState<InputMode>('url');
   const [stage, setStage] = useState<Stage>('input');
   const [url, setUrl] = useState('');
@@ -29,6 +33,7 @@ export default function JobMatchClient() {
   const [job, setJob] = useState<ParsedJobPosting | null>(null);
   const [result, setResult] = useState<JobMatchResult | null>(null);
   const [tailoredMessage, setTailoredMessage] = useState<string | null>(null);
+  const [tailoring, setTailoring] = useState(false);
 
   async function handleAnalyzeUrl() {
     setLoading(true);
@@ -90,14 +95,79 @@ export default function JobMatchClient() {
     setStage('results');
   }
 
-  function handleCreateTailoredCopy() {
-    if (!job) return;
-    const copy = createTailoredCopy(cv.meta.id, job.company || 'Company', job.positionTitle || 'Role');
-    if (copy) {
-      setTailoredMessage(
-        `Created a tailored copy "${copy.meta.name}" — your master CV was not changed. Open the Draft Manager to edit it.`,
-      );
+  async function requestTailoredText(
+    field: 'summary' | 'responsibility',
+    text: string,
+  ): Promise<{ suggestedText?: string; suggestedItems?: string[] } | null> {
+    if (!job || !text.trim()) return null;
+    try {
+      const response = await fetch('/api/ai/suggest', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: field === 'summary' ? 'improve' : 'improve_job_description',
+          field,
+          text,
+          context: {
+            professionalTitle: cv.personal.professionalTitle,
+            existingSkills: [...cv.skills.technical, ...cv.skills.soft].map((skill) => skill.name),
+            targetJob: {
+              positionTitle: job.positionTitle,
+              company: job.company,
+              summary: job.summary,
+              responsibilities: job.responsibilities,
+              requiredSkills: job.requiredSkills,
+            },
+          },
+        }),
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
     }
+  }
+
+  async function handleCreateTailoredCopy() {
+    if (!job) return;
+    setTailoring(true);
+    setTailoredMessage(null);
+    const copy = createTailoredCopy(cv.meta.id, job.company || 'Company', job.positionTitle || 'Role');
+    if (!copy) {
+      setTailoring(false);
+      setTailoredMessage('Save your CV first, then try creating the tailored version again.');
+      return;
+    }
+
+    const experiencesToTailor = cv.experience.slice(0, 5);
+    const [summaryResult, ...experienceResults] = await Promise.all([
+      requestTailoredText('summary', cv.summary),
+      ...experiencesToTailor.map((entry) =>
+        requestTailoredText('responsibility', entry.responsibilities.join('\n')),
+      ),
+    ]);
+    const experience = Object.fromEntries(
+      experiencesToTailor.map((entry, index) => {
+        const response = experienceResults[index];
+        const items = response?.suggestedItems?.length
+          ? response.suggestedItems
+          : response?.suggestedText?.split('\n').map((line) => line.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+        return [entry.id, items?.slice(0, 6) ?? []];
+      }),
+    );
+    const tailored = applyTailoring(copy, job, {
+      summary: summaryResult?.suggestedText,
+      experience,
+    });
+    const saved = saveDraft(tailored);
+    if (!saved.ok) {
+      setTailoring(false);
+      setTailoredMessage(saved.error);
+      return;
+    }
+    setActiveDraftId(tailored.meta.id);
+    replaceCV(tailored);
+    router.push('/builder');
   }
 
   return (
@@ -256,8 +326,8 @@ export default function JobMatchClient() {
                 <p className="text-sm font-semibold text-ink-700">{result.bandLabel}</p>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleCreateTailoredCopy} type="button" className="rounded-lg border border-brand-300 px-3.5 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50">
-                  Create tailored CV copy
+                <button onClick={handleCreateTailoredCopy} disabled={tailoring} type="button" className="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
+                  {tailoring ? 'Preparing your tailored CV…' : 'Create CV for this job'}
                 </button>
               </div>
             </div>
@@ -267,7 +337,10 @@ export default function JobMatchClient() {
                 Result based on: <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="underline">{job.positionTitle || 'vacancy link'}</a>
               </p>
             )}
-            {tailoredMessage && <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{tailoredMessage}</p>}
+            {tailoredMessage && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{tailoredMessage}</p>}
+            <p className="mt-2 text-[11px] text-ink-500">
+              Creates a separate CV, rewrites only your existing facts for this vacancy and prioritises skills already confirmed on your CV.
+            </p>
           </div>
 
           <RequirementGroup title="Position title" items={[result.titleMatch]} />

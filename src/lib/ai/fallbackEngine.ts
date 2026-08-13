@@ -75,12 +75,16 @@ class FallbackProvider implements AIProvider {
         ? request.context.existingSkills.slice(0, 5)
         : profile.suggestedSkills.slice(0, 4);
     const industryPhrase = request.context?.industry ? ` within the ${request.context.industry} sector` : '';
+    const target = request.context?.targetJob?.positionTitle?.trim();
+    const targetPhrase = target && target.toLowerCase() !== title.toLowerCase()
+      ? ` Well positioned to contribute in ${target} opportunities`
+      : ' Well positioned to contribute in relevant opportunities';
 
     const suggestedText =
       `${titleCaseFirst(title)} with ${yearsPhrase}${industryPhrase}, bringing practical capability in ${skills.join(', ')}. ` +
       `Experienced in supporting ${profile.themes.slice(0, 3).join(', ')}, with a strong focus on ${profile.themes.slice(3, 5).join(' and ')}. ` +
       `Known for ${profile.valuePropositions[0]} and for approaching each assignment with professionalism, accuracy and consistent attention to detail. ` +
-      `Combines clear communication, dependable teamwork and an adaptable working style to understand business needs, deliver high-quality work and contribute positively in fast-paced, multicultural UAE workplaces.`;
+      `Combines clear communication, dependable teamwork and an adaptable working style to understand business needs and deliver high-quality work.${targetPhrase}, particularly where the candidate's verified skills align with the role's priorities.`;
 
     return {
       suggestedText,
