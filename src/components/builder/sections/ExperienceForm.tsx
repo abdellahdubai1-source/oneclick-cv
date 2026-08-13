@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import type { WorkExperienceEntry } from '@/lib/cv/types';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
+import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
 
 export default function ExperienceForm() {
   const cv = useCVStore((s) => s.cv);
@@ -165,6 +166,8 @@ function BulletList({
 }) {
   const updateExperience = useCVStore((s) => s.updateExperience);
   const exp = useCVStore((s) => s.cv.experience.find((e) => e.id === entryId));
+  const professionalTitle = useCVStore((s) => s.cv.personal.professionalTitle);
+  const existingSkills = useCVStore((s) => [...s.cv.skills.technical, ...s.cv.skills.soft].map((skill) => skill.name));
 
   return (
     <div>
@@ -187,6 +190,12 @@ function BulletList({
         <AISuggestBox
           field={aiField}
           text={items.join('\n')}
+          context={{
+            professionalTitle: exp?.jobTitle || professionalTitle,
+            profession: inferProfessionFromTitle(exp?.jobTitle || professionalTitle),
+            industry: exp?.jobTitle || professionalTitle,
+            existingSkills,
+          }}
           onApply={(text) => {
             if (!exp) return;
             const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);

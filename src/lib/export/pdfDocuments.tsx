@@ -9,26 +9,71 @@ import { downloadBlob } from './downloadBlob';
 
 type Styles = ReturnType<typeof makeSharedStyles>;
 
+interface LayoutScale {
+  sectionGap: number;
+  bodySize: number;
+  bodyLineHeight: number;
+  entryGap: number;
+}
+
+function contentWeight(cv: CVDocument): number {
+  const experienceLines = cv.experience.reduce(
+    (total, exp) => total + exp.responsibilities.length + exp.achievements.length,
+    0,
+  );
+  return (
+    cv.summary.length / 90 +
+    cv.experience.length * 2 +
+    experienceLines * 0.8 +
+    cv.education.length * 1.2 +
+    cv.certifications.length +
+    cv.projects.length * 1.5 +
+    (cv.skills.technical.length + cv.skills.soft.length) * 0.18 +
+    cv.languages.length * 0.3
+  );
+}
+
+export function getPdfLayoutScale(cv: CVDocument): LayoutScale {
+  const weight = contentWeight(cv);
+  if (weight < 12) return { sectionGap: 17, bodySize: 10.5, bodyLineHeight: 1.58, entryGap: 11 };
+  if (weight < 20) return { sectionGap: 14, bodySize: 10, bodyLineHeight: 1.5, entryGap: 9 };
+  return { sectionGap: 11, bodySize: 9.25, bodyLineHeight: 1.42, entryGap: 7 };
+}
+
+function uniqueSkillNames(cv: CVDocument): string[] {
+  const seen = new Set<string>();
+  return [...cv.skills.technical, ...cv.skills.soft]
+    .map((skill) => skill.name.trim())
+    .filter((name) => {
+      const key = name.toLocaleLowerCase();
+      if (!name || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 function SectionBlock({
   cv,
   section,
   styles,
+  scale,
 }: {
   cv: CVDocument;
   section: CVSectionId;
   styles: Styles;
+  scale: LayoutScale;
 }) {
   const lang = cv.meta.language;
   return (
-    <View style={{ marginBottom: 12 }} wrap={false}>
+    <View style={{ marginBottom: scale.sectionGap }} wrap={false}>
       <Text style={styles.sectionHeading}>{SECTION_LABELS[section][lang]}</Text>
       <View style={styles.divider} />
       {section === 'summary' && (
-        <Text style={{ fontSize: 9.5, lineHeight: 1.5, color: '#2f3444' }}>{cv.summary}</Text>
+        <Text style={{ fontSize: scale.bodySize, lineHeight: scale.bodyLineHeight, color: '#2f3444' }}>{cv.summary}</Text>
       )}
       {section === 'experience' &&
         cv.experience.map((exp) => (
-          <View key={exp.id} style={{ marginBottom: 8 }}>
+          <View key={exp.id} style={{ marginBottom: scale.entryGap }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={styles.entryTitle}>
                 {exp.jobTitle} — {exp.companyName}
@@ -41,7 +86,7 @@ function SectionBlock({
             {[...exp.responsibilities, ...exp.achievements].map((line, i) => (
               <View key={i} style={styles.bulletRow}>
                 <Text style={styles.bulletDot}>•</Text>
-                <Text style={styles.bulletText}>{line}</Text>
+                <Text style={{ ...styles.bulletText, fontSize: scale.bodySize - 0.5, lineHeight: scale.bodyLineHeight }}>{line}</Text>
               </View>
             ))}
           </View>
@@ -62,12 +107,12 @@ function SectionBlock({
           </View>
         ))}
       {section === 'skills' && (
-        <Text style={{ fontSize: 9.5, lineHeight: 1.5, color: '#2f3444' }}>
-          {[...cv.skills.technical, ...cv.skills.soft].map((s) => s.name).join('  ·  ')}
+        <Text style={{ fontSize: scale.bodySize, lineHeight: scale.bodyLineHeight, color: '#2f3444' }}>
+          {uniqueSkillNames(cv).join('  ·  ')}
         </Text>
       )}
       {section === 'languages' && (
-        <Text style={{ fontSize: 9.5, lineHeight: 1.5, color: '#2f3444' }}>
+        <Text style={{ fontSize: scale.bodySize, lineHeight: scale.bodyLineHeight, color: '#2f3444' }}>
           {cv.languages.map((l) => `${l.name} (${l.proficiency})`).join('  ·  ')}
         </Text>
       )}
@@ -119,6 +164,8 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
   const color = COLOR_PRESETS[cv.template.colorPreset];
   const styles = makeSharedStyles(color);
   const sections = getVisibleSections(cv);
+  const scale = getPdfLayoutScale(cv);
+  const sparse = contentWeight(cv) < 12;
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
 
   const headerBg = variant === 'ats' ? '#ffffff' : color.primary;
@@ -133,7 +180,7 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
           style={{
             backgroundColor: headerBg,
             paddingHorizontal: PAGE_PADDING,
-            paddingVertical: 26,
+            paddingVertical: sparse ? 31 : 26,
             borderBottomWidth: variant === 'ats' ? 1.5 : 0,
             borderBottomColor: '#000000',
             flexDirection: 'row',
@@ -142,10 +189,10 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
           }}
         >
           <View style={{ alignItems: variant === 'hospitality' ? 'center' : 'flex-start' }}>
-            <Text style={{ fontFamily: FONT_FAMILY_BOLD, fontSize: 20, color: nameColor }}>
+            <Text style={{ fontFamily: FONT_FAMILY_BOLD, fontSize: sparse ? 23 : 20, color: nameColor }}>
               {cv.personal.fullName || 'Your Name'}
             </Text>
-            <Text style={{ fontSize: 11, color: titleColor, marginTop: 2 }}>
+            <Text style={{ fontSize: sparse ? 12 : 11, color: titleColor, marginTop: 3 }}>
               {cv.personal.professionalTitle || 'Professional Title'}
             </Text>
             <View style={{ marginTop: 6 }}>
@@ -171,9 +218,9 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
           </Text>
         )}
 
-        <View style={{ paddingHorizontal: PAGE_PADDING, paddingTop: 20 }}>
+        <View style={{ paddingHorizontal: sparse ? 40 : PAGE_PADDING, paddingTop: sparse ? 27 : 20 }}>
           {sections.map((section) => (
-            <SectionBlock key={section} cv={cv} section={section} styles={styles} />
+            <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
           ))}
         </View>
       </Page>
@@ -190,6 +237,8 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
   const rail = sections.filter((s) => railSections.includes(s));
   const main = sections.filter((s) => !railSections.includes(s));
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
+  const scale = getPdfLayoutScale(cv);
+  const sparse = contentWeight(cv) < 12;
 
   if (variant === 'sidebar') {
     return (
@@ -216,9 +265,9 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
                   {SECTION_LABELS[section][cv.meta.language]}
                 </Text>
                 {section === 'skills' &&
-                  [...cv.skills.technical, ...cv.skills.soft].map((s) => (
-                    <Text key={s.id} style={{ fontSize: 8, color: '#ffffff', marginBottom: 1.5 }}>
-                      {s.name}
+                  uniqueSkillNames(cv).map((s) => (
+                    <Text key={s} style={{ fontSize: sparse ? 9 : 8, color: '#ffffff', marginBottom: sparse ? 2.5 : 1.5 }}>
+                      {s}
                     </Text>
                   ))}
                 {section === 'languages' &&
@@ -238,7 +287,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
           </View>
           <View style={{ flex: 1, padding: 26 }}>
             {main.map((section) => (
-              <SectionBlock key={section} cv={cv} section={section} styles={styles} />
+              <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
             ))}
           </View>
         </Page>
@@ -265,10 +314,10 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
             <Text style={{ fontSize: 10, color: color.primary }}>{cv.personal.professionalTitle || 'Professional Title'}</Text>
           </View>
         </View>
-        <View style={{ flexDirection: 'row' }}>
-          <View style={{ width: '68%', padding: 22 }}>
+        <View style={{ flexDirection: 'row', flex: 1 }}>
+          <View style={{ width: '68%', padding: sparse ? 28 : 22 }}>
             {main.map((section) => (
-              <SectionBlock key={section} cv={cv} section={section} styles={styles} />
+              <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
             ))}
           </View>
           <View style={{ width: '32%', backgroundColor: color.primaryTint, padding: 16 }}>
@@ -278,9 +327,9 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
                   {SECTION_LABELS[section][cv.meta.language]}
                 </Text>
                 {section === 'skills' &&
-                  [...cv.skills.technical, ...cv.skills.soft].map((s) => (
-                    <Text key={s.id} style={{ fontSize: 8, color: '#2f3444', marginBottom: 1.5 }}>
-                      {s.name}
+                  uniqueSkillNames(cv).map((s) => (
+                    <Text key={s} style={{ fontSize: sparse ? 9 : 8, color: '#2f3444', marginBottom: sparse ? 2.5 : 1.5 }}>
+                      {s}
                     </Text>
                   ))}
                 {section === 'certifications' &&
@@ -313,6 +362,7 @@ function CreativePortfolioDocument({ cv }: { cv: CVDocument }) {
   const left = sections.filter((s) => leftSections.includes(s));
   const right = sections.filter((s) => !leftSections.includes(s));
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
+  const scale = getPdfLayoutScale(cv);
 
   return (
     <Document title={cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'pdf')} author={cv.personal.fullName}>
@@ -337,9 +387,9 @@ function CreativePortfolioDocument({ cv }: { cv: CVDocument }) {
                   {SECTION_LABELS[section][cv.meta.language]}
                 </Text>
                 {section === 'skills' &&
-                  [...cv.skills.technical, ...cv.skills.soft].map((s) => (
-                    <Text key={s.id} style={{ fontSize: 8, color: '#2f3444', marginBottom: 1.5 }}>
-                      {s.name}
+                  uniqueSkillNames(cv).map((s) => (
+                    <Text key={s} style={{ fontSize: 8, color: '#2f3444', marginBottom: 1.5 }}>
+                      {s}
                     </Text>
                   ))}
                 {section === 'languages' &&
@@ -361,7 +411,7 @@ function CreativePortfolioDocument({ cv }: { cv: CVDocument }) {
         </View>
         <View style={{ flex: 1, padding: 22 }}>
           {right.map((section) => (
-            <SectionBlock key={section} cv={cv} section={section} styles={styles} />
+            <SectionBlock key={section} cv={cv} section={section} styles={styles} scale={scale} />
           ))}
         </View>
       </Page>

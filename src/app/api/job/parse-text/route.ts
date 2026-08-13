@@ -37,6 +37,6 @@ export async function POST(req: Request) {
   }
 
   const text = cleanUserText(parsed.data.text, 20000);
-  const jobPosting = parseJobPosting(text);
+  const jobPosting = { ...parseJobPosting(text), extractionMethod: 'pasted_text' as const };
   return NextResponse.json({ ok: true, jobPosting });
 }

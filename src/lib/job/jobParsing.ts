@@ -1,4 +1,5 @@
 import { extractKeywords } from '@/lib/ats/keywordExtraction';
+import type { StructuredJobData } from './htmlExtraction';
 
 /**
  * Heuristic job-description parser (spec §15). Works on any plain job-text
@@ -29,6 +30,8 @@ export interface ParsedJobPosting {
   deadline: string;
   repeatedKeywords: string[];
   rawText: string;
+  sourceUrl?: string;
+  extractionMethod?: 'structured_data' | 'page_text' | 'pasted_text';
 }
 
 const EMPLOYMENT_TYPES = ['full-time', 'part-time', 'contract', 'internship', 'temporary', 'freelance', 'permanent'];
@@ -43,24 +46,24 @@ function findFirstMatch(text: string, patterns: RegExp[]): string {
   return '';
 }
 
-export function parseJobPosting(rawText: string, pageTitle?: string): ParsedJobPosting {
+export function parseJobPosting(rawText: string, pageTitle?: string, structured?: StructuredJobData | null): ParsedJobPosting {
   const text = rawText.trim();
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
   const lowerText = text.toLowerCase();
 
-  const positionTitle = (pageTitle && pageTitle.split(/[-|·]/)[0]?.trim()) || lines[0] || '';
+  const positionTitle = structured?.positionTitle || (pageTitle && pageTitle.split(/[-|·]/)[0]?.trim()) || lines[0] || '';
 
   const companyMatch = text.match(/(?:at|company:|employer:)\s+([A-Z][A-Za-z0-9&.,'\- ]{2,60})/);
-  const company = companyMatch?.[1]?.trim() ?? '';
+  const company = structured?.company || companyMatch?.[1]?.trim() || '';
 
-  const location = UAE_LOCATIONS.find((loc) => lowerText.includes(loc)) ?? '';
-  const employmentType = EMPLOYMENT_TYPES.find((t) => lowerText.includes(t)) ?? '';
+  const location = structured?.location || UAE_LOCATIONS.find((loc) => lowerText.includes(loc)) || '';
+  const employmentType = structured?.employmentType || EMPLOYMENT_TYPES.find((t) => lowerText.includes(t)) || '';
 
-  const requiredExperience = findFirstMatch(text, [/\b\d{1,2}\+?\s*(?:-\s*\d{1,2})?\s*years?\s+(?:of\s+)?experience\b/i]);
-  const education = findFirstMatch(text, [
+  const requiredExperience = structured?.requiredExperience || findFirstMatch(text, [/\b\d{1,2}\+?\s*(?:-\s*\d{1,2})?\s*years?\s+(?:of\s+)?experience\b/i]);
+  const education = structured?.education || findFirstMatch(text, [
     /\b(bachelor'?s?|master'?s?|phd|doctorate|diploma|high school diploma)\b[^.\n]{0,60}/i,
   ]);
-  const deadline = findFirstMatch(text, [
+  const deadline = structured?.deadline || findFirstMatch(text, [
     /(?:deadline|closing date|apply by)[:\s]+([A-Za-z0-9,\s]{4,30})/i,
   ]);
   const visaRequirements = findFirstMatch(text, [
@@ -73,13 +76,19 @@ export function parseJobPosting(rawText: string, pageTitle?: string): ParsedJobP
     (l) => l.charAt(0).toUpperCase() + l.slice(1),
   );
 
-  const responsibilities = lines
+  const textResponsibilities = lines
     .filter((l) => /^[-•*]/.test(l) || /responsib/i.test(l))
     .map((l) => l.replace(/^[-•*]\s*/, ''))
     .slice(0, 15);
 
-  const summary =
-    lines.find((l) => l.length > 60 && !/^[-•*]/.test(l)) ?? lines.slice(0, 3).join(' ').slice(0, 400);
+  const responsibilities = structured?.responsibilities.length
+    ? structured.responsibilities
+    : textResponsibilities;
+  const summary = structured?.description ||
+    lines.find((l) => l.length > 60 && !/^[-•*]/.test(l)) || lines.slice(0, 3).join(' ').slice(0, 400);
+
+  const structuredSkills = structured?.skills ?? [];
+  const requiredSkills = Array.from(new Set([...structuredSkills, ...knownSkills])).slice(0, 25);
 
   return {
     positionTitle: positionTitle.slice(0, 150),
@@ -88,16 +97,19 @@ export function parseJobPosting(rawText: string, pageTitle?: string): ParsedJobP
     employmentType,
     summary: summary.slice(0, 500),
     responsibilities,
-    requiredSkills: knownSkills.slice(0, 20),
-    preferredSkills: preferredLines.slice(0, 10),
+    requiredSkills,
+    preferredSkills: preferredLines.map((line) => line.replace(/^[-•*]\s*/, '')).slice(0, 10),
     requiredExperience,
     education,
-    certifications: knownSkills.filter((s) => /certif|license|licence/i.test(s)),
-    tools: knownSkills,
-    languages,
+    certifications: structured?.certifications.length
+      ? structured.certifications
+      : knownSkills.filter((s) => /certif|license|licence/i.test(s)),
+    tools: requiredSkills,
+    languages: Array.from(new Set([...(structured?.languages ?? []), ...languages])),
     visaRequirements,
     deadline,
     repeatedKeywords: freeKeywords,
     rawText: text,
+    extractionMethod: structured ? 'structured_data' : 'page_text',
   };
 }

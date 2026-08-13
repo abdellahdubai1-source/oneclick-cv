@@ -2,6 +2,7 @@
 
 import { useCVStore } from '@/lib/state/cvStore';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
+import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
 
 export default function SummaryForm() {
   const cv = useCVStore((s) => s.cv);
@@ -31,6 +32,8 @@ export default function SummaryForm() {
           text={cv.summary}
           context={{
             professionalTitle: cv.personal.professionalTitle,
+            profession: inferProfessionFromTitle(cv.personal.professionalTitle),
+            industry: cv.personal.professionalTitle,
             existingSkills: [...cv.skills.technical, ...cv.skills.soft].map((s) => s.name),
           }}
           onApply={(text) => applyTextWithUndo('summary', text, 'Professional summary')}

@@ -206,3 +206,27 @@ export const PROFESSION_PROFILES: Record<ProfessionId, ProfessionProfile> = {
 };
 
 export const PROFESSION_LIST: ProfessionProfile[] = Object.values(PROFESSION_PROFILES);
+
+const TITLE_PROFESSION_RULES: Array<[RegExp, ProfessionId]> = [
+  [/web\s*(designer|developer)|ui\/?ux|frontend/i, 'web_design'],
+  [/digital\s*market|social\s*media|seo|content\s*(creator|strateg)/i, 'digital_marketing'],
+  [/software|developer|programmer|full[ -]?stack|backend/i, 'software_development'],
+  [/it\s|information technology|technical support|network/i, 'information_technology'],
+  [/sales|business development|account executive/i, 'sales'],
+  [/customer service|call cent|support agent/i, 'customer_service'],
+  [/admin|secretary|office assistant|reception/i, 'administration'],
+  [/driver|delivery|rider|courier/i, 'delivery_driving'],
+  [/hotel|hospitality|waiter|barista|chef|front desk/i, 'hospitality'],
+  [/cleaner|cleaning|housekeep/i, 'cleaning_housekeeping'],
+  [/security|guard|cctv/i, 'security'],
+  [/account|finance|bookkeep|audit/i, 'accounting_finance'],
+  [/teacher|teaching|tutor|instructor/i, 'teaching'],
+  [/nurse|doctor|medical|healthcare|pharmac/i, 'healthcare'],
+  [/engineer|engineering/i, 'engineering'],
+  [/construction|site supervisor|foreman/i, 'construction'],
+  [/retail|cashier|shop assistant|merchandis/i, 'retail'],
+];
+
+export function inferProfessionFromTitle(title: string): ProfessionId {
+  return TITLE_PROFESSION_RULES.find(([pattern]) => pattern.test(title))?.[1] ?? 'custom';
+}

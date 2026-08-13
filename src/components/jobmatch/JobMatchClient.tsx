@@ -187,6 +187,17 @@ export default function JobMatchClient() {
             We treat anything read from a job page or file as untrusted until you confirm it. Edit anything that
             looks wrong before comparing.
           </p>
+          {job.sourceUrl && (
+            <div className="mb-4 rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-xs text-brand-800">
+              <p className="font-semibold">
+                Vacancy-specific data read from this link
+                {job.extractionMethod === 'structured_data' ? ' (verified structured job data)' : ' (page text)'}
+              </p>
+              <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="mt-0.5 block truncate underline">
+                {job.sourceUrl}
+              </a>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <ConfirmField label="Position title" value={job.positionTitle} onChange={(v) => updateJobField('positionTitle', v)} />
             <ConfirmField label="Company" value={job.company} onChange={(v) => updateJobField('company', v)} />
@@ -202,6 +213,21 @@ export default function JobMatchClient() {
                 value={job.requiredSkills.join(', ')}
                 onChange={(e) => updateJobField('requiredSkills', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
                 rows={2}
+                className="input mt-1"
+              />
+            </label>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="block text-xs font-medium text-ink-600">
+              Job summary extracted from the link
+              <textarea value={job.summary} onChange={(e) => updateJobField('summary', e.target.value)} rows={6} className="input mt-1" />
+            </label>
+            <label className="block text-xs font-medium text-ink-600">
+              Responsibilities extracted from the link
+              <textarea
+                value={job.responsibilities.join('\n')}
+                onChange={(e) => updateJobField('responsibilities', e.target.value.split('\n').map((line) => line.trim()).filter(Boolean))}
+                rows={6}
                 className="input mt-1"
               />
             </label>
@@ -236,6 +262,11 @@ export default function JobMatchClient() {
               </div>
             </div>
             <p className="mt-2 text-[11px] text-ink-400">{result.disclaimer}</p>
+            {job.sourceUrl && (
+              <p className="mt-2 text-xs text-brand-700">
+                Result based on: <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="underline">{job.positionTitle || 'vacancy link'}</a>
+              </p>
+            )}
             {tailoredMessage && <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{tailoredMessage}</p>}
           </div>
 

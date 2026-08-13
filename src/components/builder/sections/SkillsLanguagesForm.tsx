@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import AISuggestBox from '@/components/builder/ai/AISuggestBox';
 import type { LanguageProficiency } from '@/lib/cv/types';
+import { inferProfessionFromTitle } from '@/lib/cv/professionProfiles';
 
 const PROFICIENCIES: LanguageProficiency[] = ['basic', 'conversational', 'fluent', 'native'];
 
@@ -36,6 +37,7 @@ export default function SkillsLanguagesForm() {
             text=""
             context={{
               professionalTitle: cv.personal.professionalTitle,
+              profession: inferProfessionFromTitle(cv.personal.professionalTitle),
               existingSkills: cv.skills.technical.map((s) => s.name),
             }}
             onApply={() => {}}

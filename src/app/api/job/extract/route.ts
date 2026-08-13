@@ -48,14 +48,23 @@ export async function POST(req: Request) {
   try {
     const page = await fetchJobPage(parsed.data.url);
     const extracted = extractJobPageContent(page.html);
-    const jobPosting = parseJobPosting(extracted.text, extracted.title);
+    if (!extracted.structuredJob && extracted.text.length < 120) {
+      throw new JobFetchError('The page did not expose a readable job description.', 'unsupported_content_type');
+    }
+    const sourceText = extracted.structuredJob?.description || extracted.text;
+    const jobPosting = {
+      ...parseJobPosting(sourceText, extracted.title, extracted.structuredJob),
+      sourceUrl: page.finalUrl,
+      extractionMethod: extracted.structuredJob ? 'structured_data' as const : 'page_text' as const,
+    };
 
     return NextResponse.json({
       ok: true,
       finalUrl: page.finalUrl,
       pageTitle: extracted.title,
       jobPosting,
-      promptInjectionDetected: looksLikePromptInjection(extracted.text),
+      promptInjectionDetected: looksLikePromptInjection(sourceText),
+      extractionMethod: jobPosting.extractionMethod,
     });
   } catch (err) {
     const fetchError = err instanceof JobFetchError ? err : null;

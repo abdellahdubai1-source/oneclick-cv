@@ -12,7 +12,7 @@ import { validateJobUrl, UrlSecurityError } from './urlValidation';
  * - Never forwards cookies or credentials.
  */
 
-const DEFAULT_TIMEOUT_MS = Number(process.env.JOB_FETCH_TIMEOUT_MS ?? 8000);
+const DEFAULT_TIMEOUT_MS = Number(process.env.JOB_FETCH_TIMEOUT_MS ?? 12000);
 const DEFAULT_MAX_BYTES = Number(process.env.JOB_FETCH_MAX_BYTES ?? 2_000_000);
 const DEFAULT_MAX_REDIRECTS = Number(process.env.JOB_FETCH_MAX_REDIRECTS ?? 3);
 
@@ -64,7 +64,7 @@ export async function fetchJobPage(rawUrl: string): Promise<FetchedJobPage> {
         credentials: 'omit',
         signal: controller.signal,
         headers: {
-          'user-agent': 'OneClickCV-JobLinkAnalyser/1.0 (+https://oneclickcv.example/privacy)',
+          'user-agent': 'Mozilla/5.0 (compatible; OneClickCV-JobLinkAnalyser/1.0; +https://oneclick-cv.vercel.app/privacy)',
           accept: 'text/html,application/xhtml+xml',
         },
       });
