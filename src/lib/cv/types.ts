@@ -206,19 +206,7 @@ export interface CVDocument {
   sections: SectionSettings;
 }
 
-/** The 11-step guided builder flow (spec §6). */
-export const BUILDER_STEPS = [
-  'personal',
-  'summary',
-  'experience',
-  'education',
-  'skills',
-  'certifications',
-  'uae',
-  'template',
-  'ats',
-  'review',
-  'download',
-] as const;
+/** Four focused steps: enough detail for a strong CV without a long wizard. */
+export const BUILDER_STEPS = ['personal', 'experience', 'skills', 'finish'] as const;
 
 export type BuilderStepId = (typeof BUILDER_STEPS)[number];

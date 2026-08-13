@@ -40,7 +40,7 @@ export default function DownloadStep() {
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-ink-900">Download</h2>
+      <h2 className="text-lg font-semibold text-ink-900">Your CV is ready</h2>
       <p className="mt-1 text-sm text-ink-500">
         Your CV is ready. Download a true A4, selectable-text PDF matching your {templateDef.name} template, or an
         ATS-friendly DOCX.
@@ -61,7 +61,7 @@ export default function DownloadStep() {
         <p className="font-semibold text-ink-700">Before you send it</p>
         <ul className="mt-1 list-disc space-y-1 pl-4">
           <li>Recommended length: one page for limited experience, one to two pages for most professionals.</li>
-          <li>Review the ATS &amp; Job Match step if you're applying to a specific vacancy.</li>
+          <li>Use the optional ATS job match only when applying to a specific vacancy.</li>
           <li>Double-check contact details — this is how employers will reach you.</li>
         </ul>
       </div>

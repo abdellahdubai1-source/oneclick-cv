@@ -3,6 +3,7 @@ import type { CVDocument } from '@/lib/cv/types';
 import { getVisibleSections, SECTION_LABELS } from '@/lib/cv/sectionOrder';
 import { formatDateRange } from '@/lib/utils/dates';
 import { cvFilename } from './filename';
+import { downloadBlob } from './downloadBlob';
 
 /**
  * DOCX export (spec §14/§22 — "DOCX where practical").
@@ -160,10 +161,9 @@ export function buildCVDocx(cv: CVDocument): Document {
 }
 
 export async function downloadCVDocx(cv: CVDocument): Promise<void> {
-  const { saveAs } = await import('file-saver');
   const doc = buildCVDocx(cv);
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'docx'));
+  downloadBlob(blob, cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'docx'));
 }
 
 // Re-export for callers that only need alignment/heading constants without pulling in the whole module surface.

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { AISuggestRequest } from '@/lib/cv/schema';
 import type { AISuggestionResult } from './providerInterface';
+import { fallbackProvider } from './fallbackEngine';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -36,9 +37,17 @@ export function useAISuggestion(): UseAISuggestionState {
       const data = (await response.json()) as AISuggestionResult & { degraded?: boolean };
       setResult(data);
       setStatus('success');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setStatus('error');
+    } catch {
+      // Keep the builder useful even when the API, deployment protection or
+      // an external model is unavailable. The local engine is profession-aware.
+      try {
+        const fallback = await fallbackProvider.suggest(request);
+        setResult({ ...fallback, degraded: true });
+        setStatus('success');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+        setStatus('error');
+      }
     }
   }, []);
 

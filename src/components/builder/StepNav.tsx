@@ -5,16 +5,9 @@ import { cn } from '@/lib/utils/cn';
 
 export const STEP_LABELS: Record<BuilderStepId, string> = {
   personal: 'Personal Details',
-  summary: 'Professional Summary',
-  experience: 'Work Experience',
-  education: 'Education',
-  skills: 'Skills & Languages',
-  certifications: 'Certifications',
-  uae: 'UAE Details',
-  template: 'Template',
-  ats: 'ATS & Job Match',
-  review: 'Final Review',
-  download: 'Download',
+  experience: 'Experience & Education',
+  skills: 'Summary & Skills',
+  finish: 'Template & Download',
 };
 
 export default function StepNav({

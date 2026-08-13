@@ -5,6 +5,7 @@ import { COLOR_PRESETS } from '@/lib/cv/colorPresets';
 import { getVisibleSections, SECTION_LABELS } from '@/lib/cv/sectionOrder';
 import { FONT_FAMILY_BOLD, formatDateRangePdf, makeSharedStyles } from './pdfPrimitives';
 import { cvFilename, coverLetterFilename } from './filename';
+import { downloadBlob } from './downloadBlob';
 
 type Styles = ReturnType<typeof makeSharedStyles>;
 
@@ -406,10 +407,9 @@ const PAGE_STYLE_FOR_LETTER = { fontFamily: 'Times-Roman', color: '#1c1f2a' };
 /** Client-side PDF generation — dynamically imported so `@react-pdf/renderer` never ships in the initial bundle. */
 export async function downloadCVPdf(cv: CVDocument): Promise<void> {
   const { pdf } = await import('@react-pdf/renderer');
-  const { saveAs } = await import('file-saver');
   const doc = buildCVDocument(cv);
   const blob = await pdf(doc).toBlob();
-  saveAs(blob, cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'pdf'));
+  downloadBlob(blob, cvFilename(cv.personal.fullName, cv.personal.professionalTitle, 'pdf'));
 }
 
 export async function downloadCoverLetterPdf(params: {
@@ -418,8 +418,7 @@ export async function downloadCoverLetterPdf(params: {
   text: string;
 }): Promise<void> {
   const { pdf } = await import('@react-pdf/renderer');
-  const { saveAs } = await import('file-saver');
   const blob = await pdf(<CoverLetterDocument text={params.text} />).toBlob();
-  saveAs(blob, coverLetterFilename(params.candidateName));
+  downloadBlob(blob, coverLetterFilename(params.candidateName));
 }
 /* eslint-disable jsx-a11y/alt-text -- @react-pdf/renderer Image is a PDF primitive, not a DOM img element. */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, useState } from 'react';
 import { useCVStore } from '@/lib/state/cvStore';
 import { BUILDER_STEPS, type BuilderStepId } from '@/lib/cv/types';
 import StepNav, { STEP_LABELS } from './StepNav';
@@ -13,39 +13,45 @@ import SummaryForm from './sections/SummaryForm';
 import ExperienceForm from './sections/ExperienceForm';
 import EducationForm from './sections/EducationForm';
 import SkillsLanguagesForm from './sections/SkillsLanguagesForm';
-import CertificationsForm from './sections/CertificationsForm';
-import UAEDetailsForm from './sections/UAEDetailsForm';
 import TemplateStep from './sections/TemplateStep';
 import ATSStep from './sections/ATSStep';
 import ReviewStep from './sections/ReviewStep';
 import DownloadStep from './sections/DownloadStep';
 
-const STEP_COMPONENTS: Record<BuilderStepId, ComponentType> = {
-  personal: PersonalDetailsForm,
-  summary: SummaryForm,
-  experience: ExperienceForm,
-  education: EducationForm,
-  skills: SkillsLanguagesForm,
-  certifications: CertificationsForm,
-  uae: UAEDetailsForm,
-  template: TemplateStep,
-  ats: ATSStep,
-  review: ReviewStep,
-  download: DownloadStep,
-};
+function StepContent({ step }: { step: BuilderStepId }) {
+  if (step === 'personal') return <PersonalDetailsForm />;
+  if (step === 'experience') {
+    return <div className="space-y-6"><ExperienceForm /><EducationForm /></div>;
+  }
+  if (step === 'skills') {
+    return <div className="space-y-6"><SummaryForm /><SkillsLanguagesForm /></div>;
+  }
+  return (
+    <div className="space-y-6">
+      <TemplateStep />
+      <details className="card p-5">
+        <summary className="cursor-pointer text-sm font-semibold text-ink-800">Optional ATS job match</summary>
+        <div className="mt-5"><ATSStep /></div>
+      </details>
+      <details className="card p-5">
+        <summary className="cursor-pointer text-sm font-semibold text-ink-800">Final review</summary>
+        <div className="mt-5"><ReviewStep /></div>
+      </details>
+      <DownloadStep />
+    </div>
+  );
+}
 
 function isStepComplete(step: BuilderStepId, cv: ReturnType<typeof useCVStore.getState>['cv']): boolean {
   switch (step) {
     case 'personal':
       return !!(cv.personal.fullName && cv.personal.professionalTitle && cv.personal.phone && cv.personal.email);
-    case 'summary':
-      return cv.summary.trim().length > 0;
     case 'experience':
-      return cv.experience.length > 0;
-    case 'education':
-      return cv.education.length > 0;
+      return cv.experience.length > 0 || cv.education.length > 0;
     case 'skills':
-      return cv.skills.technical.length > 0 || cv.skills.soft.length > 0;
+      return cv.summary.trim().length > 0 && (cv.skills.technical.length > 0 || cv.skills.soft.length > 0);
+    case 'finish':
+      return false;
     default:
       return false;
   }
@@ -76,7 +82,6 @@ export default function BuilderShell() {
   }
 
   const currentIndex = BUILDER_STEPS.indexOf(step);
-  const StepComponent = STEP_COMPONENTS[step];
   const completed = new Set(BUILDER_STEPS.filter((s) => isStepComplete(s, cv)));
 
   function goTo(next: BuilderStepId) {
@@ -135,7 +140,7 @@ export default function BuilderShell() {
 
         <section className={cn(mobileView === 'preview' ? 'hidden lg:block' : 'block')}>
           <h2 className="mb-3 text-sm font-semibold text-ink-400 lg:hidden">{STEP_LABELS[step]}</h2>
-          <StepComponent />
+          <StepContent step={step} />
 
           <div className="mt-6 flex justify-between">
             <button type="button" onClick={goPrev} disabled={currentIndex === 0} className="btn-secondary disabled:opacity-40">
