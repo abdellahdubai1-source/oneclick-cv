@@ -30,12 +30,13 @@ export class OpenAIProvider implements AIProvider {
         },
         body: JSON.stringify({
           model: this.model,
+          reasoning_effort: 'minimal',
           response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: AI_SYSTEM_PROMPT },
             { role: 'user', content: buildUserPrompt(request) },
           ],
-          max_completion_tokens: 700,
+          max_completion_tokens: 1200,
         }),
         signal: controller.signal,
       });
