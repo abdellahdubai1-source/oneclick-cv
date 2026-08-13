@@ -421,20 +421,19 @@ function CreativePortfolioDocument({ cv }: { cv: CVDocument }) {
 
 export function buildCVDocument(cv: CVDocument) {
   switch (cv.template.templateId) {
-    case 'executive-uae':
-      return <SingleColumnDocument cv={cv} variant="executive" />;
-    case 'minimal-ats':
+    case 'classic-ats-professional':
+    case 'elegant-minimal-ats':
+    case 'blue-line-ats':
       return <SingleColumnDocument cv={cv} variant="ats" />;
-    case 'hospitality-uae':
-      return <SingleColumnDocument cv={cv} variant="hospitality" />;
-    case 'modern-professional':
+    case 'dark-sidebar-professional':
+    case 'compact-dark-sidebar':
+    case 'executive-black-gold':
+    case 'monochrome-timeline':
       return <TwoRegionDocument cv={cv} variant="sidebar" />;
-    case 'technical-professional':
+    case 'minimal-green-designer':
       return <TwoRegionDocument cv={cv} variant="technical" />;
-    case 'creative-portfolio':
-      return <CreativePortfolioDocument cv={cv} />;
     default:
-      return <SingleColumnDocument cv={cv} variant="executive" />;
+      return <SingleColumnDocument cv={cv} variant="ats" />;
   }
 }
 

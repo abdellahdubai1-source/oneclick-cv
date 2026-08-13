@@ -152,12 +152,14 @@ export interface SectionSettings {
 }
 
 export type TemplateId =
-  | 'executive-uae'
-  | 'modern-professional'
-  | 'minimal-ats'
-  | 'creative-portfolio'
-  | 'hospitality-uae'
-  | 'technical-professional';
+  | 'dark-sidebar-professional'
+  | 'compact-dark-sidebar'
+  | 'minimal-green-designer'
+  | 'executive-black-gold'
+  | 'classic-ats-professional'
+  | 'elegant-minimal-ats'
+  | 'blue-line-ats'
+  | 'monochrome-timeline';
 
 export type ColorPresetId =
   | 'navy-blue'

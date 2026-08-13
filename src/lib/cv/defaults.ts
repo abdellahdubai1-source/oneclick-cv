@@ -53,7 +53,7 @@ export function createEmptyCV(name = 'Untitled CV'): CVDocument {
       mimeType: null,
     },
     template: {
-      templateId: 'executive-uae',
+      templateId: 'dark-sidebar-professional',
       colorPreset: 'navy-blue',
     },
     sections: {

@@ -2,129 +2,29 @@ import type { TemplateId } from '@/lib/cv/types';
 
 export type PhotoShape = 'circle' | 'rounded-square' | 'square' | 'rectangle';
 
-export interface TemplatePhotoSpec {
-  enabledByDefault: boolean;
-  shape: PhotoShape;
-  /** Tailwind width/height classes for the preview render. */
-  sizeClass: string;
-  position: 'top-right' | 'sidebar-top' | 'top-right-small' | 'left-large' | 'centered-top' | 'beside-contact';
-  showsAtsWarningWhenEnabled: boolean;
-}
-
 export interface TemplateDefinition {
-  id: TemplateId;
-  name: string;
-  tagline: string;
-  description: string;
-  layout: 'single-column' | 'sidebar-left' | 'editorial-left-photo' | 'centered-elegant' | 'technical-grid';
+  id: TemplateId; name: string; tagline: string; description: string;
+  layout: 'single-column' | 'sidebar-left' | 'technical-grid';
   bestFor: string[];
-  photo: TemplatePhotoSpec;
+  photo: { enabledByDefault: boolean; shape: PhotoShape; sizeClass: string; position: 'sidebar-top' | 'top-right-small'; showsAtsWarningWhenEnabled: boolean };
   atsFriendly: boolean;
 }
 
+const photo = (enabledByDefault: boolean, sizeClass = 'h-28 w-28') => ({
+  enabledByDefault, shape: 'circle' as const, sizeClass,
+  position: (enabledByDefault ? 'sidebar-top' : 'top-right-small') as 'sidebar-top' | 'top-right-small',
+  showsAtsWarningWhenEnabled: !enabledByDefault,
+});
+
 export const TEMPLATE_REGISTRY: Record<TemplateId, TemplateDefinition> = {
-  'executive-uae': {
-    id: 'executive-uae',
-    name: 'Executive UAE',
-    tagline: 'Premium corporate authority',
-    description:
-      'A dark navy header, elegant typography and a balanced single-column layout for managers, administrators and corporate professionals.',
-    layout: 'single-column',
-    bestFor: ['Managers', 'Administrators', 'Corporate professionals'],
-    photo: {
-      enabledByDefault: true,
-      shape: 'circle',
-      sizeClass: 'w-24 h-24',
-      position: 'top-right',
-      showsAtsWarningWhenEnabled: false,
-    },
-    atsFriendly: true,
-  },
-  'modern-professional': {
-    id: 'modern-professional',
-    name: 'Signature Sidebar',
-    tagline: 'Elegant, clear and recruiter-friendly',
-    description:
-      'A polished dark sidebar with a circular portrait, contact details and skills, paired with a clean white content area for profile, experience and education.',
-    layout: 'sidebar-left',
-    bestFor: ['UAE applications', 'Corporate roles', 'Technical professionals'],
-    photo: {
-      enabledByDefault: true,
-      shape: 'circle',
-      sizeClass: 'w-32 h-32',
-      position: 'sidebar-top',
-      showsAtsWarningWhenEnabled: false,
-    },
-    atsFriendly: true,
-  },
-  'minimal-ats': {
-    id: 'minimal-ats',
-    name: 'Minimal ATS',
-    tagline: 'Built for applicant tracking systems',
-    description:
-      'A clean single-column layout with no sidebar, tables or icons — optimised for reliable parsing by applicant tracking systems.',
-    layout: 'single-column',
-    bestFor: ['Online applications', 'Applicant tracking systems'],
-    photo: {
-      enabledByDefault: false,
-      shape: 'square',
-      sizeClass: 'w-16 h-16',
-      position: 'top-right-small',
-      showsAtsWarningWhenEnabled: true,
-    },
-    atsFriendly: true,
-  },
-  'creative-portfolio': {
-    id: 'creative-portfolio',
-    name: 'Creative Portfolio',
-    tagline: 'Editorial, project-forward layout',
-    description:
-      'A modern editorial layout with a large photo and strong professional title, tuned for designers, marketers and content creators.',
-    layout: 'editorial-left-photo',
-    bestFor: ['Designers', 'Marketers', 'Photographers', 'Content creators'],
-    photo: {
-      enabledByDefault: true,
-      shape: 'rectangle',
-      sizeClass: 'w-full h-56',
-      position: 'left-large',
-      showsAtsWarningWhenEnabled: false,
-    },
-    atsFriendly: false,
-  },
-  'hospitality-uae': {
-    id: 'hospitality-uae',
-    name: 'Hospitality UAE',
-    tagline: 'Warm and welcoming presentation',
-    description:
-      'An elegant, welcoming design with a centred circular photo, built for hotel, restaurant, retail and hospitality roles.',
-    layout: 'centered-elegant',
-    bestFor: ['Hotels', 'Restaurants', 'Retail', 'Customer-facing roles'],
-    photo: {
-      enabledByDefault: true,
-      shape: 'circle',
-      sizeClass: 'w-24 h-24',
-      position: 'centered-top',
-      showsAtsWarningWhenEnabled: false,
-    },
-    atsFriendly: false,
-  },
-  'technical-professional': {
-    id: 'technical-professional',
-    name: 'Technical Professional',
-    tagline: 'Structured for technical depth',
-    description:
-      'A structured layout that puts technical skills, projects and certifications front and centre for developers and engineers.',
-    layout: 'technical-grid',
-    bestFor: ['Developers', 'Engineers', 'Technicians', 'IT professionals'],
-    photo: {
-      enabledByDefault: true,
-      shape: 'rounded-square',
-      sizeClass: 'w-16 h-16',
-      position: 'beside-contact',
-      showsAtsWarningWhenEnabled: false,
-    },
-    atsFriendly: true,
-  },
+  'dark-sidebar-professional': { id: 'dark-sidebar-professional', name: 'Dark Sidebar Professional', tagline: 'Large portrait and confident hierarchy', description: 'Dark 36% sidebar with a large circular portrait, bright name treatment and spacious professional content.', layout: 'sidebar-left', bestFor: ['Software', 'Engineering', 'UAE applications'], photo: photo(true, 'h-36 w-36'), atsFriendly: true },
+  'compact-dark-sidebar': { id: 'compact-dark-sidebar', name: 'Compact Dark Sidebar', tagline: 'Compact and recruiter-friendly', description: 'Narrow dark sidebar, compact typography and short underlined headings designed for a complete one-page CV.', layout: 'sidebar-left', bestFor: ['UX', 'Design', 'Corporate roles'], photo: photo(true), atsFriendly: true },
+  'minimal-green-designer': { id: 'minimal-green-designer', name: 'Minimal Green Designer', tagline: 'Clean green editorial layout', description: 'White two-column design with green rules, contact icons, employment rows and visual skill indicators.', layout: 'technical-grid', bestFor: ['Designers', 'UI/UX', 'Creative professionals'], photo: photo(true, 'h-24 w-24'), atsFriendly: false },
+  'executive-black-gold': { id: 'executive-black-gold', name: 'Executive Black & Gold', tagline: 'Premium management presentation', description: 'Black gradient sidebar, warm stone header, gold accents and compact executive experience blocks.', layout: 'sidebar-left', bestFor: ['Project managers', 'Executives', 'Construction'], photo: photo(true), atsFriendly: true },
+  'classic-ats-professional': { id: 'classic-ats-professional', name: 'Classic ATS Professional', tagline: 'Maximum ATS compatibility', description: 'Black-and-white single-column CV with bold uppercase headings, full-width rules and compact bullet points.', layout: 'single-column', bestFor: ['Online applications', 'Marketing', 'Finance'], photo: photo(false), atsFriendly: true },
+  'elegant-minimal-ats': { id: 'elegant-minimal-ats', name: 'Elegant Minimal ATS', tagline: 'Refined and understated', description: 'Centred letter-spaced identity, soft-grey contact band and elegant ruled sections with balanced whitespace.', layout: 'single-column', bestFor: ['Administration', 'Consulting', 'Corporate roles'], photo: photo(false), atsFriendly: true },
+  'blue-line-ats': { id: 'blue-line-ats', name: 'Blue-Line ATS Resume', tagline: 'Clear blue section navigation', description: 'Centred blue identity with split heading rules, two-column qualifications and spacious achievement bullets.', layout: 'single-column', bestFor: ['Marketing', 'Sales', 'General applications'], photo: photo(false), atsFriendly: true },
+  'monochrome-timeline': { id: 'monochrome-timeline', name: 'Monochrome Timeline', tagline: 'Editorial career timeline', description: 'Dark-grey profile rail, condensed headings and a structured timeline for experience and education.', layout: 'sidebar-left', bestFor: ['Technical roles', 'Creative roles', 'Experienced candidates'], photo: photo(true), atsFriendly: false },
 };
 
-export const TEMPLATE_LIST: TemplateDefinition[] = Object.values(TEMPLATE_REGISTRY);
+export const TEMPLATE_LIST = Object.values(TEMPLATE_REGISTRY);

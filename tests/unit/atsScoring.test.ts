@@ -59,7 +59,7 @@ describe('runATSCheck', () => {
 
   it('recommends the Minimal ATS template when a non-ATS-friendly template is selected', () => {
     const cv = baseCV();
-    cv.template.templateId = 'creative-portfolio';
+    cv.template.templateId = 'monochrome-timeline';
     const result = runATSCheck(cv, 'Marketing Executive role requiring Google Analytics.');
     expect(result.formattingIssues.some((f) => /template/i.test(f.title))).toBe(true);
   });

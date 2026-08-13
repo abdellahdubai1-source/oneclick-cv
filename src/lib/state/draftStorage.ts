@@ -154,7 +154,18 @@ export function loadDraft(id: string): CVDocument | null {
     const raw = window.localStorage.getItem(STORAGE_PREFIX + id);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    const result = cvDocumentSchema.safeParse(parsed.cv ?? parsed);
+    const stored = parsed.cv ?? parsed;
+    const legacyTemplates: Record<string, string> = {
+      'executive-uae': 'executive-black-gold',
+      'modern-professional': 'dark-sidebar-professional',
+      'minimal-ats': 'classic-ats-professional',
+      'creative-portfolio': 'minimal-green-designer',
+      'hospitality-uae': 'elegant-minimal-ats',
+      'technical-professional': 'compact-dark-sidebar',
+    };
+    const oldTemplate = stored?.template?.templateId;
+    if (oldTemplate && legacyTemplates[oldTemplate]) stored.template.templateId = legacyTemplates[oldTemplate];
+    const result = cvDocumentSchema.safeParse(stored);
     if (!result.success) {
       // eslint-disable-next-line no-console
       console.warn('Stored draft failed validation, ignoring corrupt draft', result.error.flatten());

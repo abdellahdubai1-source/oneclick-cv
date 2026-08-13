@@ -3,7 +3,7 @@ import type { CVDocument, TemplateId } from './types';
 import { generateId } from '@/lib/utils/id';
 
 /** Realistic sample CV used only for template previews (landing page, template gallery) — never persisted. */
-export function createSampleCV(templateId: TemplateId = 'executive-uae'): CVDocument {
+export function createSampleCV(templateId: TemplateId = 'dark-sidebar-professional'): CVDocument {
   const base = createEmptyCV('Sample CV');
   const sample: CVDocument = {
     ...base,
