@@ -75,9 +75,20 @@ function parseModelJson(text: string, request: AISuggestRequest): AISuggestionRe
     const rawItems = Array.isArray(parsed.suggestedItems)
       ? parsed.suggestedItems.filter((item: unknown): item is string => typeof item === 'string')
       : [];
-    const suggestedItems = rawItems
+    let suggestedItems = rawItems
       .map((item: string) => item.trim())
       .filter((item: string) => item.length > 1 && !ADVICE_OR_PLACEHOLDER.test(item));
+
+    // Some models correctly return a comma-separated skills string but omit
+    // suggestedItems. Convert that copy-ready list into individual add buttons
+    // so the Skills form never presents an Apply action that cannot insert it.
+    if (request.field === 'skills' && suggestedItems.length === 0) {
+      suggestedItems = parsed.suggestedText
+        .split(/[,\n]/)
+        .map((item: string) => item.trim())
+        .filter((item: string) => item.length > 1 && !ADVICE_OR_PLACEHOLDER.test(item))
+        .slice(0, 12);
+    }
 
     if (ADVICE_OR_PLACEHOLDER.test(parsed.suggestedText)) {
       throw new Error('response contains placeholder or editing advice');
