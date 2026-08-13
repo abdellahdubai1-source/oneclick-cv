@@ -38,6 +38,7 @@ export default function PhotoEditor() {
   const templateDef = TEMPLATE_REGISTRY[cv.template.templateId];
   const aspect = SHAPE_ASPECT[templateDef.photo.shape] ?? 1;
   const roundPreview = templateDef.photo.shape === 'circle';
+  const hasPhoto = Boolean(cv.photo.originalDataUrl || cv.photo.processedDataUrl);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setPendingAreaPixels(croppedAreaPixels);
@@ -174,17 +175,19 @@ export default function PhotoEditor() {
               className="rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
               disabled={busy}
             >
-              {cv.photo.originalDataUrl ? 'Replace photo' : 'Upload photo'}
+              {hasPhoto ? 'Replace photo' : 'Upload photo'}
             </button>
-            {cv.photo.originalDataUrl && (
+            {hasPhoto && (
               <>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="rounded-lg border border-ink-200 px-3.5 py-2 text-xs font-semibold text-ink-700 transition hover:bg-ink-50"
-                >
-                  Edit crop
-                </button>
+                {cv.photo.originalDataUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className="rounded-lg border border-ink-200 px-3.5 py-2 text-xs font-semibold text-ink-700 transition hover:bg-ink-50"
+                  >
+                    Edit crop
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleRemove}

@@ -36,14 +36,14 @@ function rotatedSize(width: number, height: number, rotationDeg: number) {
   };
 }
 
-const MAX_OUTPUT_DIMENSION = 800; // px — plenty for print-quality CV photos while keeping localStorage payload small
+const MAX_OUTPUT_DIMENSION = 600; // Sharp at CV-photo size while remaining safe for localStorage.
 
 export async function getCroppedImageDataUrl(
   imageSrc: string,
   cropPixels: PixelCrop,
   rotationDeg: number,
-  outputType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg',
-  quality = 0.92,
+  _outputType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg',
+  quality = 0.84,
 ): Promise<string> {
   const image = await createImage(imageSrc);
 
@@ -81,7 +81,10 @@ export async function getCroppedImageDataUrl(
     outputCanvas.height,
   );
 
-  return outputCanvas.toDataURL(outputType, quality);
+  // JPEG is dramatically smaller than PNG for portrait photos. The CV photo
+  // is rendered against an opaque template background, so transparency is not
+  // needed in the saved draft.
+  return outputCanvas.toDataURL('image/jpeg', quality);
 }
 
 export function readFileAsDataUrl(file: File): Promise<string> {

@@ -65,30 +65,84 @@ function upsertIndexEntry(cv: CVDocument): void {
 
 export class DraftStorageError extends Error {}
 
-/** Quota guard: browsers typically allow ~5MB per origin for localStorage. */
-const MAX_DRAFT_BYTES = 4 * 1024 * 1024;
+/** Keep each draft comfortably below browsers' typical ~5MB per-origin limit. */
+const MAX_DRAFT_BYTES = 1.5 * 1024 * 1024;
+
+/**
+ * The full-resolution upload is needed only while the crop editor is open.
+ * Persisting it alongside the cropped photo duplicated several megabytes in
+ * every draft and quickly exhausted localStorage. Drafts keep only the small,
+ * print-ready processed image; users can upload the source again to re-crop.
+ */
+export function prepareCVForStorage(cv: CVDocument): CVDocument {
+  return {
+    ...cv,
+    photo: {
+      ...cv.photo,
+      originalDataUrl: null,
+    },
+  };
+}
+
+function compactStoredDrafts(): void {
+  for (const entry of readIndex()) {
+    const key = STORAGE_PREFIX + entry.id;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      const storedCV = parsed.cv ?? parsed;
+      if (!storedCV?.photo?.originalDataUrl) continue;
+      storedCV.photo.originalDataUrl = null;
+      const compacted = parsed.cv
+        ? JSON.stringify({ ...parsed, cv: storedCV })
+        : JSON.stringify(storedCV);
+      window.localStorage.setItem(key, compacted);
+    } catch {
+      // Ignore an individual corrupt/locked draft and continue compacting.
+    }
+  }
+}
+
+function isQuotaError(err: unknown): boolean {
+  return err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22);
+}
+
+function writeDraft(cv: CVDocument, payload: string): void {
+  window.localStorage.setItem(STORAGE_PREFIX + cv.meta.id, payload);
+  upsertIndexEntry(cv);
+  window.localStorage.setItem(ACTIVE_KEY, cv.meta.id);
+}
 
 export function saveDraft(cv: CVDocument): { ok: true } | { ok: false; error: string } {
   if (!isBrowser()) return { ok: false, error: 'Storage unavailable' };
+  const storageCV = prepareCVForStorage(cv);
+  const payload = JSON.stringify({ version: STORAGE_VERSION, cv: storageCV });
+  if (payload.length > MAX_DRAFT_BYTES) {
+    return {
+      ok: false,
+      error: 'This draft is too large to save locally. Remove the photo and upload a smaller image.',
+    };
+  }
   try {
-    const payload = JSON.stringify({ version: STORAGE_VERSION, cv });
-    if (payload.length > MAX_DRAFT_BYTES) {
-      return {
-        ok: false,
-        error:
-          'This draft is too large to save locally (likely due to a high-resolution photo). Try replacing the photo with a smaller image.',
-      };
-    }
-    window.localStorage.setItem(STORAGE_PREFIX + cv.meta.id, payload);
-    upsertIndexEntry(cv);
-    window.localStorage.setItem(ACTIVE_KEY, cv.meta.id);
+    writeDraft(storageCV, payload);
     return { ok: true };
   } catch (err) {
-    if (err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)) {
-      return {
-        ok: false,
-        error: 'Your browser storage is full. Delete an old draft or use a smaller photo.',
-      };
+    if (isQuotaError(err)) {
+      // Migrate older drafts that still contain full-resolution source photos,
+      // then retry once so existing users recover without deleting their CV.
+      compactStoredDrafts();
+      try {
+        writeDraft(storageCV, payload);
+        return { ok: true };
+      } catch (retryError) {
+        if (isQuotaError(retryError)) {
+          return {
+            ok: false,
+            error: 'Browser storage is still full. Delete one old draft, then continue editing.',
+          };
+        }
+      }
     }
     return { ok: false, error: 'Could not save draft to this device.' };
   }
