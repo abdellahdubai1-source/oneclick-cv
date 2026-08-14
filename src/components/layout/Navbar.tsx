@@ -7,10 +7,7 @@ import { cn } from '@/lib/utils/cn';
 
 const NAV_LINKS = [
   { href: '/builder', label: 'CV Builder' },
-  { href: '/templates', label: 'Templates' },
-  { href: '/cover-letter', label: 'Cover Letter' },
-  { href: '/job-match', label: 'Match a Job' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/job-match', label: 'Apply with Job Link' },
 ];
 
 export default function Navbar() {
@@ -38,12 +35,6 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-        </div>
-
-        <div className="hidden md:block">
-          <Link href="/builder" className="btn-primary">
-            Create My CV
-          </Link>
         </div>
 
         <button
@@ -81,9 +72,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/builder" onClick={() => setOpen(false)} className="btn-primary mt-2 justify-center">
-              Create My CV
-            </Link>
           </div>
         </div>
       )}
