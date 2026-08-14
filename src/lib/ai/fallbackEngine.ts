@@ -81,10 +81,9 @@ class FallbackProvider implements AIProvider {
       : ' Well positioned to contribute in relevant opportunities';
 
     const suggestedText =
-      `${titleCaseFirst(title)} with ${yearsPhrase}${industryPhrase}, bringing practical capability in ${skills.join(', ')}. ` +
-      `Experienced in supporting ${profile.themes.slice(0, 3).join(', ')}, with a strong focus on ${profile.themes.slice(3, 5).join(' and ')}. ` +
-      `Known for ${profile.valuePropositions[0]} and for approaching each assignment with professionalism, accuracy and consistent attention to detail. ` +
-      `Combines clear communication, dependable teamwork and an adaptable working style to understand business needs and deliver high-quality work.${targetPhrase}, particularly where the candidate's verified skills align with the role's priorities.`;
+      `${titleCaseFirst(title)} with ${yearsPhrase}${industryPhrase} and practical capability in ${skills.slice(0, 4).join(', ')}. ` +
+      `Experienced in ${profile.themes.slice(0, 2).join(' and ')}, with a consistent focus on quality, accuracy and reliable delivery. ` +
+      `${profile.valuePropositions[0]}.${targetPhrase}.`;
 
     return {
       suggestedText,
@@ -145,8 +144,8 @@ class FallbackProvider implements AIProvider {
       (s) => !existing.has(s.toLowerCase()),
     );
     return {
-      suggestedText: candidates.join(', '),
-      suggestedItems: candidates.slice(0, 10),
+      suggestedText: candidates.slice(0, 8).join(', '),
+      suggestedItems: candidates.slice(0, 8),
       reason: `Common skills for ${profile.label} roles that aren't already on your CV. Only add a skill if you genuinely have it.`,
       source: 'fallback',
     };
@@ -184,11 +183,14 @@ class FallbackProvider implements AIProvider {
         source: 'fallback',
       };
     }
-    const verb = profile.achievementVerbs[Math.floor(Math.random() * profile.achievementVerbs.length)];
-    const startsWithVerb = /^[A-Z][a-z]+ed\b|^[A-Z][a-z]+d\b/.test(base);
-    const rewritten = startsWithVerb ? titleCaseFirst(base) : `${verb} ${base.charAt(0).toLowerCase()}${base.slice(1)}`;
+    const lines = base.split(/\n+|;+/).map((line) => line.trim()).filter(Boolean).slice(0, 5);
+    const rewritten = lines.map((line, index) => {
+      const verb = profile.achievementVerbs[index % profile.achievementVerbs.length];
+      const startsWithVerb = /^[A-Z][a-z]+(?:ed|d)\b/.test(line);
+      return (startsWithVerb ? titleCaseFirst(line) : `${verb} ${line.charAt(0).toLowerCase()}${line.slice(1)}`).replace(/\.?\s*$/, '.');
+    }).join('\n');
     return {
-      suggestedText: rewritten.replace(/\.?\s*$/, '.'),
+      suggestedText: rewritten,
       reason: `Rewritten to start with a strong action verb common in ${profile.label} roles, in professional UAE-job-market wording.`,
       source: 'fallback',
     };
