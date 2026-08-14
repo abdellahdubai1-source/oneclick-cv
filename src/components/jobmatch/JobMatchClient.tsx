@@ -89,10 +89,21 @@ export default function JobMatchClient() {
     setJob((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
-  function handleConfirmAndCompare() {
+  function handleMakeCVForJob() {
     if (!job) return;
-    setResult(matchCVToJob(cv, job));
-    setStage('results');
+    try {
+      const key = 'oneclickcv:interview-answers-v2';
+      const saved = JSON.parse(localStorage.getItem(key) || '{}');
+      localStorage.setItem(key, JSON.stringify({
+        ...saved,
+        professionalTitle: job.positionTitle || saved.professionalTitle || '',
+        targetCompany: job.company || '',
+        jobRequirements: [job.summary, ...job.responsibilities, ...job.requiredSkills].filter(Boolean).join('\n'),
+        technicalSkills: job.requiredSkills.slice(0, 8).join(', '),
+      }));
+      sessionStorage.setItem('oneclickcv:target-job', JSON.stringify(job));
+    } catch {}
+    router.push('/builder');
   }
 
   async function requestTailoredText(
@@ -308,10 +319,10 @@ export default function JobMatchClient() {
             </button>
             <button
               type="button"
-              onClick={handleConfirmAndCompare}
+              onClick={handleMakeCVForJob}
               className="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-700"
             >
-              Compare with my CV
+              Make CV for This Job
             </button>
           </div>
         </div>
