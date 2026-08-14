@@ -40,7 +40,7 @@ export function getPdfLayoutScale(cv: CVDocument): LayoutScale {
   if (weight < 12) return { sectionGap: 27, bodySize: 11.8, bodyLineHeight: 1.7, entryGap: 16 };
   if (weight < 20) return { sectionGap: 22, bodySize: 11.2, bodyLineHeight: 1.62, entryGap: 13 };
   if (weight < 26) return { sectionGap: 15, bodySize: 10.25, bodyLineHeight: 1.52, entryGap: 10 };
-  return { sectionGap: 11, bodySize: 9.25, bodyLineHeight: 1.42, entryGap: 7 };
+  return { sectionGap: 11, bodySize: 10, bodyLineHeight: 1.45, entryGap: 7 };
 }
 
 function uniqueSkillNames(cv: CVDocument): string[] {
@@ -52,7 +52,8 @@ function uniqueSkillNames(cv: CVDocument): string[] {
       if (!name || seen.has(key)) return false;
       seen.add(key);
       return true;
-    });
+    })
+    .slice(0, 8);
 }
 
 function SectionBlock({
@@ -86,7 +87,7 @@ function SectionBlock({
               </Text>
             </View>
             {exp.location ? <Text style={styles.entryMeta}>{exp.location}</Text> : null}
-            {[...exp.responsibilities, ...exp.achievements].map((line, i) => (
+            {[...exp.responsibilities, ...exp.achievements].slice(0, 5).map((line, i) => (
               <View key={i} style={styles.bulletRow}>
                 <Text style={styles.bulletDot}>•</Text>
                 <Text style={{ ...styles.bulletText, fontSize: scale.bodySize - 0.5, lineHeight: scale.bodyLineHeight }}>{line}</Text>
@@ -213,13 +214,6 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
             />
           )}
         </View>
-
-        {variant === 'ats' && cv.personal.photoEnabled && (
-          <Text style={{ fontSize: 7.5, color: '#66708c', fontStyle: 'italic', paddingHorizontal: PAGE_PADDING, marginTop: 6 }}>
-            For the best ATS compatibility, we recommend using a CV without a photo unless the employer specifically
-            requests one.
-          </Text>
-        )}
 
         <View style={{ paddingHorizontal: sparse ? 40 : PAGE_PADDING, paddingTop: sparse ? 27 : 20, paddingBottom: sparse ? 34 : 20, flexGrow: 1, justifyContent: sparse ? 'space-between' : 'flex-start' }}>
           {sections.map((section) => (
