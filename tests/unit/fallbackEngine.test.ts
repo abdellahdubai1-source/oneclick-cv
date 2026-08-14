@@ -10,7 +10,8 @@ describe('fallbackProvider', () => {
       context: { professionalTitle: 'Sales Executive', profession: 'sales', yearsOfExperience: 4 },
     });
     expect(result.source).toBe('fallback');
-    expect(result.suggestedText.split(/\s+/).length).toBeGreaterThanOrEqual(70);
+    expect(result.suggestedText.split(/\s+/).length).toBeGreaterThanOrEqual(50);
+    expect(result.suggestedText.split(/\s+/).length).toBeLessThanOrEqual(70);
     expect(result.suggestedText).not.toMatch(/[\[\]]/);
     expect(result.suggestedText).not.toMatch(/\d+%/);
     expect(result.suggestedText).not.toMatch(/\b(add|replace|specify)\b/i);
