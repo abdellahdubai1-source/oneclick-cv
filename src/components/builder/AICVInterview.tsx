@@ -16,14 +16,18 @@ import type { ProfessionId } from '@/lib/cv/professionProfiles';
 type Answers = Record<string, string>;
 type AIAction = 'create_summary' | 'improve_job_description' | 'generate_achievements' | 'add_skills';
 type AIField = 'summary' | 'responsibility' | 'achievement' | 'skills';
-type Question = { key: string; label: string; help: string; placeholder?: string; required?: boolean; multiline?: boolean; choices?: string[]; ai?: [AIAction, AIField]; show?: (a: Answers) => boolean };
+type Question = { key: string; label: string; help: string; placeholder?: string; required?: boolean; multiline?: boolean; choices?: string[]; suggestions?: string[]; inputType?: 'text' | 'month' | 'photo'; ai?: [AIAction, AIField]; show?: (a: Answers) => boolean };
 type Section = { id: string; title: string; description: string; questions: Question[] };
 
 const q = (key: string, label: string, help: string, extra: Partial<Question> = {}): Question => ({ key, label, help, ...extra });
+const JOB_TITLES = ['Web Designer', 'Web Developer', 'Frontend Developer', 'UI/UX Designer', 'Digital Marketing Specialist', 'Social Media Manager', 'Graphic Designer', 'Cleaner', 'Cleaning Supervisor', 'Clinic Receptionist', 'Customer Service Representative', 'Cashier', 'Sales Executive', 'Administrative Assistant', 'Accountant', 'Delivery Driver', 'Security Guard', 'Waiter', 'Barista', 'Teacher', 'Nurse'];
+const NATIONALITIES = ['Emirati', 'Ethiopian', 'Egyptian', 'Eritrean', 'Indian', 'Pakistani', 'Bangladeshi', 'Nepalese', 'Filipino', 'Kenyan', 'Nigerian', 'Somali', 'Sudanese', 'Syrian', 'Jordanian', 'Lebanese', 'Moroccan', 'Tunisian', 'Ugandan', 'Ghanaian'];
+const INSTITUTIONS = ['Jimma University', 'Addis Ababa University', 'University of Dubai', 'American University in Dubai', 'University of Sharjah', 'Zayed University', 'Higher Colleges of Technology', 'Heriot-Watt University Dubai'];
+const LANGUAGES = ['Afaan Oromo', 'English', 'Amharic', 'Arabic', 'French', 'Hindi', 'Urdu', 'Bengali', 'Tagalog', 'Somali', 'Swahili'];
 const SECTIONS: Section[] = [
   { id: 'personal', title: 'Personal details', description: 'The essential details recruiters need.', questions: [
     q('fullName', 'Full name', 'As it should appear on your CV.', { required: true, placeholder: 'e.g. Abdellah Teha' }),
-    q('professionalTitle', 'Target job title', 'Use a title employers search for.', { required: true, placeholder: 'e.g. Digital Marketing Specialist' }),
+    q('professionalTitle', 'Target job title', 'Type to choose a standard job title.', { required: true, placeholder: 'Start typing: web, clean, customer…', suggestions: JOB_TITLES }),
     q('email', 'Professional email', 'Use an email you check regularly.', { required: true, placeholder: 'name@email.com' }),
   ] },
   { id: 'contact', title: 'Contact & location', description: 'Keep this short and professional.', questions: [
@@ -32,14 +36,14 @@ const SECTIONS: Section[] = [
     q('links', 'LinkedIn or portfolio', 'Optional. Put each link on a new line.', { multiline: true, placeholder: 'https://linkedin.com/in/name\nhttps://portfolio.com' }),
   ] },
   { id: 'uae', title: 'UAE employment details', description: 'Useful details for UAE recruiters.', questions: [
-    q('nationality', 'Nationality', 'Optional, but common on UAE CVs.', { placeholder: 'e.g. Ethiopian' }),
+    q('nationality', 'Nationality', 'Type to search and select the correct nationality.', { placeholder: 'Start typing: E…', suggestions: NATIONALITIES }),
     q('visa', 'Visa status', 'Choose the accurate option.', { choices: ['Employment visa', 'Visit visa', 'Family sponsored', 'Golden visa', 'Freelance permit', 'Citizen', 'Prefer not to say'] }),
-    q('availability', 'Availability', 'When can you start?', { placeholder: 'Immediately / 30 days' }),
+    q('availability', 'Availability', 'Choose the accurate start time.', { choices: ['Immediately', 'Within 1 week', 'Within 2 weeks', 'Within 30 days', 'After notice period'] }),
   ] },
   { id: 'profile', title: 'Professional profile', description: 'Short answers are enough — AI will polish them.', questions: [
     q('background', 'Professional background', 'Mention years, work and industries.', { required: true, multiline: true, placeholder: '3 years managing social media, creating videos and running ads…', ai: ['create_summary', 'summary'] }),
-    q('technicalSkills', 'Job-related skills', 'Add skills and tools you genuinely use.', { required: true, multiline: true, placeholder: 'Meta Ads, Canva, CapCut, SEO', ai: ['add_skills', 'skills'] }),
-    q('softSkills', 'Professional strengths', 'Choose qualities you can demonstrate.', { multiline: true, placeholder: 'Communication, teamwork, time management', ai: ['add_skills', 'skills'] }),
+    q('technicalSkills', 'Job-related skills', 'Only 6–8 relevant skills you genuinely use.', { required: true, multiline: true, placeholder: 'Figma, Responsive Design, HTML/CSS', ai: ['add_skills', 'skills'] }),
+    q('softSkills', 'Professional strengths', 'Only 4–6 qualities; do not repeat technical skills.', { multiline: true, placeholder: 'Communication, attention to detail, teamwork' }),
   ] },
   { id: 'role', title: 'Recent work experience', description: 'Freelance, internship and part-time work count too.', questions: [
     q('hasExperience', 'Do you have work experience?', 'Choose No for your first CV.', { required: true, choices: ['Yes', 'No'] }),
@@ -48,8 +52,9 @@ const SECTIONS: Section[] = [
   ] },
   { id: 'roleDetails', title: 'Role details', description: 'AI turns simple facts into strong bullet points.', questions: [
     q('exp1Location', 'Location', 'City and country are enough.', { placeholder: 'Dubai, UAE', show: a => a.hasExperience === 'Yes' }),
-    q('exp1Dates', 'Start and end dates', 'Write Current if still employed.', { required: true, placeholder: 'Jan 2023 to Current', show: a => a.hasExperience === 'Yes' }),
-    q('exp1Duties', 'Main responsibilities', 'Write simple tasks; AI rewrites them.', { required: true, multiline: true, placeholder: 'Managed social pages\nCreated videos\nHelped customers', ai: ['improve_job_description', 'responsibility'], show: a => a.hasExperience === 'Yes' }),
+    q('exp1Start', 'Start date', 'Choose the month and year.', { required: true, inputType: 'month', show: a => a.hasExperience === 'Yes' }),
+    q('exp1End', 'End date', 'Choose the month, year, or Current.', { required: true, inputType: 'month', show: a => a.hasExperience === 'Yes' }),
+    q('exp1Duties', 'Main responsibilities', 'Only 3–5 main tasks; one per line.', { required: true, multiline: true, placeholder: 'Designed responsive websites\nCreated wireframes\nWorked with clients', ai: ['improve_job_description', 'responsibility'], show: a => a.hasExperience === 'Yes' }),
   ] },
   { id: 'moreWork', title: 'Achievements & previous role', description: 'Real examples make the CV convincing.', questions: [
     q('exp1Achievements', 'Results or achievements', 'Only include results you can explain.', { multiline: true, placeholder: 'Increased engagement through consistent content', ai: ['generate_achievements', 'achievement'], show: a => a.hasExperience === 'Yes' }),
@@ -63,13 +68,23 @@ const SECTIONS: Section[] = [
   ] },
   { id: 'education', title: 'Education', description: 'University, college, diploma or vocational study.', questions: [
     q('hasEducation', 'Add education?', 'Choose No if not relevant.', { required: true, choices: ['Yes', 'No'] }),
-    q('qualification', 'Qualification', 'Write the full name.', { required: true, placeholder: 'Bachelor of Business Administration', show: a => a.hasEducation === 'Yes' }),
-    q('institution', 'Institution', 'Use the official name.', { required: true, placeholder: 'Jimma University', show: a => a.hasEducation === 'Yes' }),
+    q('qualification', 'Qualification', 'Choose the correct level.', { required: true, choices: ['High School', 'Certificate', 'Diploma', "Bachelor's Degree", "Master's Degree", 'PhD', 'Vocational Training'], show: a => a.hasEducation === 'Yes' }),
+    q('institution', 'Institution', 'Type to search or enter the official name.', { required: true, placeholder: 'Start typing the school name…', suggestions: INSTITUTIONS, show: a => a.hasEducation === 'Yes' }),
   ] },
   { id: 'credentials', title: 'Qualifications & languages', description: 'Details that strengthen the application.', questions: [
-    q('educationDates', 'Study dates', 'Start and graduation year.', { required: true, placeholder: '2019 to 2023', show: a => a.hasEducation === 'Yes' }),
-    q('languages', 'Languages', 'Include proficiency.', { required: true, multiline: true, placeholder: 'Afaan Oromo — Native, English — Fluent' }),
-    q('certifications', 'Certifications or courses', 'Optional. One per line.', { multiline: true, placeholder: 'Google Digital Marketing — Google' }),
+    q('educationStart', 'Study start date', 'Choose the month and year.', { required: true, inputType: 'month', show: a => a.hasEducation === 'Yes' }),
+    q('educationEnd', 'Graduation date', 'Choose the month and year.', { required: true, inputType: 'month', show: a => a.hasEducation === 'Yes' }),
+    q('fieldOfStudy', 'Field of study', 'Use the official programme name.', { placeholder: 'e.g. Computer Science', show: a => a.hasEducation === 'Yes' }),
+  ] },
+  { id: 'languages', title: 'Languages', description: 'Choose accurate language levels only.', questions: [
+    q('language1', 'Language', 'Type to search for a language.', { required: true, suggestions: LANGUAGES, placeholder: 'e.g. Afaan Oromo' }),
+    q('language1Level', 'Proficiency', 'Choose one accurate level.', { required: true, choices: ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'] }),
+    q('languagesAdditional', 'Additional languages', 'Optional. Add one per line with proficiency.', { multiline: true, placeholder: 'English — Fluent\nArabic — Conversational' }),
+  ] },
+  { id: 'certifications', title: 'Certifications & courses', description: 'Add only qualifications you actually completed.', questions: [
+    q('certificationName', 'Certificate or course', 'Optional. Enter the official name.', { suggestions: ['Google Digital Marketing & E-commerce', 'Google Data Analytics', 'AWS Certified Cloud Practitioner', 'Microsoft Office Specialist', 'IELTS', 'First Aid'] }),
+    q('certificationIssuer', 'Issuing organisation', 'Optional. Enter the official provider.', { placeholder: 'Google, AWS, Microsoft, British Council' }),
+    q('certificationDate', 'Completion date', 'Optional month and year.', { inputType: 'month' }),
   ] },
   { id: 'extras', title: 'Projects & preferences', description: 'Final optional details for a stronger UAE CV.', questions: [
     q('projects', 'Relevant projects', 'Mention what you built or achieved.', { multiline: true, placeholder: 'Built a booking website for a Dubai travel agency', ai: ['improve_job_description', 'responsibility'] }),
@@ -80,11 +95,19 @@ const SECTIONS: Section[] = [
     q('targetCompany', 'Target company', 'Leave blank for a general CV.', { placeholder: 'Emirates Group' }),
     q('jobRequirements', 'Important job requirements', 'Paste the vacancy; AI matches wording without inventing.', { multiline: true, placeholder: 'Paste the most important requirements here…' }),
   ] },
+  { id: 'photo', title: 'Professional photo', description: 'Optional. Upload and crop a clear profile photo.', questions: [
+    q('photo', 'Upload photo', 'JPG, PNG or WebP. You can change it after generation.', { inputType: 'photo' }),
+  ] },
 ];
 
 const splitItems = (v = '') => v.split(/\n|,/).map(x => x.trim()).filter(Boolean);
 const splitLines = (v = '') => v.split(/\n|\s*[•▪]\s*/).map(x => x.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
 const dates = (v = '') => v.match(/\d{4}(?:-\d{2})?/g) ?? [];
+const uniqueLimited = (items: string[], limit: number) => {
+  const seen = new Set<string>();
+  return items.filter(item => { const key = item.toLowerCase(); if (!item || seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit);
+};
+const clampWords = (text: string, limit: number) => text.trim().split(/\s+/).slice(0, limit).join(' ').replace(/[,;:]?$/, '.');
 const visaMap: Record<string, VisaStatus> = { 'Employment visa': 'employment_visa', 'Visit visa': 'visit_visa', 'Family sponsored': 'family_sponsored', 'Golden visa': 'golden_visa', 'Freelance permit': 'freelance_permit', Citizen: 'citizen', 'Prefer not to say': 'prefer_not_to_say' };
 
 function profession(title: string): ProfessionId {
@@ -111,19 +134,19 @@ function templateFor(title: string): TemplateId {
 
 export function buildCVFromInterview(base: CVDocument, a: Answers): CVDocument {
   const experience: CVDocument['experience'] = [];
-  const firstDates = dates(a.exp1Dates || `${a.exp1Start || ''} ${a.exp1End || ''}`);
+  const firstDates = dates(a.exp1Start || a.exp1End ? `${a.exp1Start || ''} ${a.exp1End || ''}` : a.exp1Dates || '');
   if (a.hasExperience === 'Yes') {
-    const current = /current|present/i.test(a.exp1Dates || a.exp1End || '');
-    experience.push({ id: generateId('exp'), jobTitle: a.exp1Title || '', companyName: a.exp1Company || '', location: a.exp1Location || '', startDate: firstDates[0] || '', endDate: current ? null : firstDates[1] || null, currentlyWorking: current, responsibilities: splitLines(a.exp1Duties), achievements: splitLines(a.exp1Achievements) });
+    const current = /current|present/i.test(`${a.exp1End || ''} ${a.exp1Dates || ''}`);
+    experience.push({ id: generateId('exp'), jobTitle: a.exp1Title || '', companyName: a.exp1Company || '', location: a.exp1Location || '', startDate: firstDates[0] || '', endDate: current ? null : firstDates[1] || null, currentlyWorking: current, responsibilities: uniqueLimited(splitLines(a.exp1Duties), 5), achievements: uniqueLimited(splitLines(a.exp1Achievements), 2) });
   }
   if (a.hasSecondExperience === 'Yes') {
     const [jobTitle = '', companyName = ''] = (a.exp2Role || `${a.exp2Title || ''} — ${a.exp2Company || ''}`).split(/\s*[—–]\s*/);
     const d = dates(a.exp2Dates);
     experience.push({ id: generateId('exp'), jobTitle, companyName, location: '', startDate: d[0] || '', endDate: d[1] || null, currentlyWorking: false, responsibilities: splitLines(a.exp2Duties), achievements: splitLines(a.exp2Achievements) });
   }
-  const studyDates = dates(a.educationDates);
-  const education: CVDocument['education'] = a.hasEducation === 'Yes' ? [{ id: generateId('edu'), institution: a.institution || '', qualification: a.qualification || '', fieldOfStudy: '', location: '', startDate: studyDates[0] || '', endDate: studyDates[1] || null, currentlyStudying: /current/i.test(a.educationDates || ''), gradeOrHonors: '' }] : [];
-  const languages = splitItems(a.languages).map(item => {
+  const studyDates = dates(`${a.educationStart || ''} ${a.educationEnd || ''}`);
+  const education: CVDocument['education'] = a.hasEducation === 'Yes' ? [{ id: generateId('edu'), institution: a.institution || '', qualification: a.qualification || '', fieldOfStudy: a.fieldOfStudy || '', location: '', startDate: studyDates[0] || '', endDate: studyDates[1] || null, currentlyStudying: /current/i.test(a.educationEnd || ''), gradeOrHonors: '' }] : [];
+  const languages = splitItems(a.languages || `${a.language1 || ''} — ${a.language1Level || ''}\n${a.languagesAdditional || ''}`).map(item => {
     const [name, level] = item.split(/\s*[—–-]\s*/); const raw = (level || '').toLowerCase();
     const proficiency: LanguageProficiency = raw.includes('native') ? 'native' : raw.includes('fluent') || raw.includes('proficient') ? 'fluent' : raw.includes('conversation') ? 'conversational' : 'basic';
     return { id: generateId('lang'), name: name || item, proficiency };
@@ -134,11 +157,11 @@ export function buildCVFromInterview(base: CVDocument, a: Answers): CVDocument {
     meta: { ...base.meta, name: `${a.fullName || 'My'} CV`, updatedAt: new Date().toISOString() },
     personal: { ...base.personal, fullName: a.fullName || '', professionalTitle: a.professionalTitle || '', email: a.email || '', phone: a.phone || '', city, country: country || 'United Arab Emirates', linkedInUrl: links.find(x => /linkedin/i.test(x)) || a.linkedIn || '', portfolioUrl: links.find(x => !/linkedin/i.test(x)) || a.portfolio || '' },
     uae: { ...base.uae, nationality: a.nationality || '', visaStatus: visaMap[a.visa || ''], availability: a.availability || '', hasUAEDrivingLicence: a.drivingLicence === 'Yes', willingToRelocate: a.relocate === 'Yes' },
-    summary: a.background || '', experience, education,
-    skills: { technical: splitItems(a.technicalSkills).map(name => ({ id: generateId('skill'), name })), soft: splitItems(a.softSkills).map(name => ({ id: generateId('skill'), name })) },
+    summary: clampWords(a.background || '', 70), experience, education,
+    skills: { technical: uniqueLimited(splitItems(a.technicalSkills), 8).map(name => ({ id: generateId('skill'), name })), soft: uniqueLimited(splitItems(a.softSkills), 5).filter(name => !splitItems(a.technicalSkills).some(skill => skill.toLowerCase() === name.toLowerCase())).map(name => ({ id: generateId('skill'), name })) },
     languages,
-    certifications: splitItems(a.certifications).map(item => { const [name, issuingOrganization = ''] = item.split(/\s*[—–]\s*/); return { id: generateId('cert'), name: name || item, issuingOrganization }; }),
-    projects: splitLines(a.projects).map((description, i) => ({ id: generateId('proj'), name: `Project ${i + 1}`, description, technologies: [] })),
+    certifications: a.certificationName ? [{ id: generateId('cert'), name: a.certificationName, issuingOrganization: a.certificationIssuer || '', issueDate: a.certificationDate || '' }] : [],
+    projects: splitLines(a.projects).slice(0, 3).map((description) => ({ id: generateId('proj'), name: description.split(/[-—:]/)[0]?.trim().slice(0, 55) || 'Relevant Project', description: clampWords(description, 30), technologies: [] })),
     template: { ...base.template, templateId: templateFor(a.professionalTitle || '') },
   };
 }
@@ -181,7 +204,7 @@ export default function AICVInterview() {
     const [action, field] = question.ai; const current = answers[question.key] || '';
     const seed = current || [answers.background, answers.exp1Title, answers.exp1Company, answers.exp1Duties].filter(Boolean).join('. ') || `Truthful suggestions for a ${answers.professionalTitle || 'professional'} CV`;
     try {
-      const result = await askAI({ action, field, text: seed, context: { professionalTitle: answers.exp1Title || answers.professionalTitle, existingSkills: splitItems(answers.technicalSkills), targetJob: answers.jobRequirements ? { positionTitle: answers.professionalTitle, company: answers.targetCompany || undefined, summary: answers.jobRequirements } : undefined } });
+      const result = await askAI({ action, field, text: seed, context: { profession: profession(answers.exp1Title || answers.professionalTitle || ''), professionalTitle: answers.exp1Title || answers.professionalTitle || '', existingSkills: splitItems(answers.technicalSkills), targetJob: answers.jobRequirements ? { positionTitle: answers.professionalTitle || '', company: answers.targetCompany || undefined, summary: answers.jobRequirements } : undefined } });
       const value = result?.suggestedItems?.length ? result.suggestedItems.join(field === 'skills' ? ', ' : '\n') : result?.suggestedText;
       if (value) set(question.key, value); else setError('Add one short fact first, then AI can improve it.');
     } catch { setError('AI suggestion is temporarily unavailable. You can continue normally.'); }
@@ -196,24 +219,24 @@ export default function AICVInterview() {
     setGenerating(true); setError(null); let nextCV = buildCVFromInterview(cv, answers);
     try {
       const [summary, ...roles] = await Promise.all([
-        askAI({ action: 'create_summary', field: 'summary', text: answers.background || '', context: { professionalTitle: answers.professionalTitle, existingSkills: splitItems(answers.technicalSkills), targetJob: answers.jobRequirements ? { positionTitle: answers.professionalTitle, company: answers.targetCompany || undefined, summary: answers.jobRequirements } : undefined } }),
-        ...nextCV.experience.map(role => askAI({ action: 'improve_job_description', field: 'responsibility', text: role.responsibilities.join('\n'), context: { professionalTitle: role.jobTitle || answers.professionalTitle, existingSkills: splitItems(answers.technicalSkills) } })),
+        askAI({ action: 'create_summary', field: 'summary', text: answers.background || '', context: { profession: profession(answers.professionalTitle || ''), professionalTitle: answers.professionalTitle || '', existingSkills: splitItems(answers.technicalSkills), targetJob: answers.jobRequirements ? { positionTitle: answers.professionalTitle || '', company: answers.targetCompany || undefined, summary: answers.jobRequirements } : undefined } }),
+        ...nextCV.experience.map(role => askAI({ action: 'improve_job_description', field: 'responsibility', text: role.responsibilities.join('\n'), context: { profession: profession(role.jobTitle || answers.professionalTitle || ''), professionalTitle: role.jobTitle || answers.professionalTitle || '', existingSkills: splitItems(answers.technicalSkills) } })),
       ]);
-      if (summary?.suggestedText) nextCV = { ...nextCV, summary: summary.suggestedText };
-      nextCV = { ...nextCV, experience: nextCV.experience.map((role, i) => ({ ...role, responsibilities: roles[i]?.suggestedItems?.length ? roles[i]!.suggestedItems! : roles[i]?.suggestedText ? splitLines(roles[i]!.suggestedText!) : role.responsibilities })) };
+      if (summary?.suggestedText) nextCV = { ...nextCV, summary: clampWords(summary.suggestedText, 70) };
+      nextCV = { ...nextCV, experience: nextCV.experience.map((role, i) => ({ ...role, responsibilities: uniqueLimited(roles[i]?.suggestedItems?.length ? roles[i]!.suggestedItems! : roles[i]?.suggestedText ? splitLines(roles[i]!.suggestedText!) : role.responsibilities, 5) })) };
     } catch {}
     replaceCV(nextCV);
     const letter = generateCoverLetter({ profession: profession(answers.professionalTitle || ''), customProfessionLabel: answers.professionalTitle, positionTitle: answers.professionalTitle || 'the advertised role', companyName: answers.targetCompany || 'your company', jobDescription: answers.jobRequirements, importantRequirements: answers.jobRequirements, experienceLevel: nextCV.experience.length > 1 ? 'mid' : 'entry', confirmedSkills: nextCV.skills.technical.map(x => x.name), tone: 'professional' }, { fullName: nextCV.personal.fullName, phone: nextCV.personal.phone, email: nextCV.personal.email, city: nextCV.personal.city, country: nextCV.personal.country, summary: nextCV.summary, recentRole: nextCV.experience[0] ? `${nextCV.experience[0].jobTitle} at ${nextCV.experience[0].companyName}` : undefined, confirmedAchievements: nextCV.experience.flatMap(x => x.achievements).slice(0, 3), projects: nextCV.projects.map(x => x.name).slice(0, 3) });
     setCoverLetter(letter.fullText); setGenerated(true); setGenerating(false); scrollTo({ top: 0, behavior: 'smooth' });
   }
   async function improve() {
-    setImproving(true); const result = await askAI({ action: 'improve', field: 'summary', text: cv.summary, context: { professionalTitle: cv.personal.professionalTitle, existingSkills: cv.skills.technical.map(x => x.name) } }).catch(() => null);
-    if (result?.suggestedText) replaceCV({ ...cv, summary: result.suggestedText }); else setError('AI writing is temporarily unavailable.'); setImproving(false);
+    setImproving(true); const result = await askAI({ action: 'improve', field: 'summary', text: cv.summary, context: { profession: profession(cv.personal.professionalTitle), professionalTitle: cv.personal.professionalTitle, existingSkills: cv.skills.technical.map(x => x.name) } }).catch(() => null);
+    if (result?.suggestedText) replaceCV({ ...cv, summary: clampWords(result.suggestedText, 70) }); else setError('AI writing is temporarily unavailable.'); setImproving(false);
   }
   const tabs = <div className="mx-auto mb-7 grid max-w-xl grid-cols-2 rounded-2xl bg-ink-100 p-1.5"><button type="button" className="rounded-xl bg-white px-4 py-3 text-sm font-bold text-brand-700 shadow-sm">CV Builder</button><Link href="/job-match" className="rounded-xl px-4 py-3 text-center text-sm font-bold text-ink-600 hover:bg-white">Apply with Job Link</Link></div>;
 
   if (generated) return <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">{tabs}<div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">AI CV complete</p><h1 className="text-2xl font-bold text-ink-900">Your professional CV is ready</h1><p className="mt-1 text-sm text-ink-500">AI selected a suitable template. Switch templates without losing information.</p></div><button className="btn-secondary" onClick={() => setDraftsOpen(true)}>My drafts</button></div>{error ? <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</p> : null}<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,620px)]"><div className="space-y-5"><div className="card p-5"><div className="flex flex-wrap gap-2"><button className="btn-secondary" onClick={() => { setGenerated(false); setStep(0); }}>Edit information</button><button className="btn-primary" onClick={() => void improve()} disabled={improving}>{improving ? 'Improving…' : 'Improve writing with AI'}</button><Link href="/job-match" className="btn-secondary">Tailor for a job link</Link></div></div><div className="rounded-2xl border-2 border-brand-200 bg-brand-50/40 p-1"><TemplateStep /></div><DownloadStep /><details className="card p-5"><summary className="cursor-pointer font-semibold">Add or change profile photo</summary><div className="mt-5"><PhotoEditor /></div></details><div className="card p-5"><div className="flex items-center justify-between"><div><h2 className="font-semibold">Matching cover letter</h2><p className="text-xs text-ink-500">Generated from the same information.</p></div><button className="btn-secondary" onClick={() => navigator.clipboard.writeText(coverLetter)}>Copy</button></div><textarea value={coverLetter} onChange={e => setCoverLetter(e.target.value)} className="input mt-4 min-h-[320px]" /></div></div><div className="card h-[calc(100vh-7rem)] overflow-hidden lg:sticky lg:top-20"><LivePreview cv={cv} className="h-full" /></div></div>{draftsOpen ? <DraftManagerPanel onClose={() => setDraftsOpen(false)} /> : null}</div>;
 
   const progress = ((step + 1) / sections.length) * 100;
-  return <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">{tabs}<div className="mb-7 flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">OneClick AI CV Builder</p><h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">Complete one short section at a time</h1><p className="mt-2 text-sm text-ink-500">Three questions per section. Use AI whenever you are unsure.</p></div><button className="btn-secondary" onClick={() => setDraftsOpen(true)}>My drafts</button></div><div className="mb-5"><div className="flex justify-between text-xs font-medium text-ink-500"><span>Section {step + 1} of {sections.length}</span><span>{Math.round(progress)}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100"><div className="h-full rounded-full bg-brand-600" style={{ width: `${progress}%` }} /></div></div><div className="card p-5 sm:p-8"><div className="mb-6"><div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-xl">✦</div><h2 className="text-xl font-bold sm:text-2xl">{section?.title}</h2><p className="mt-1 text-sm text-ink-500">{section?.description}</p></div><div className="grid gap-5 md:grid-cols-3">{questions.map(question => <div key={question.key} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4"><label htmlFor={question.key} className="text-sm font-bold">{question.label}{question.required ? <span className="ml-1 text-red-500">*</span> : null}</label><p className="mt-1 min-h-9 text-xs leading-relaxed text-ink-500">{question.help}</p>{question.choices ? <div className="mt-3 flex flex-wrap gap-2">{question.choices.map(choice => <button key={choice} type="button" onClick={() => set(question.key, choice)} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${(answers[question.key] || '') === choice ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-ink-200 bg-white text-ink-600'}`}>{choice}</button>)}</div> : question.multiline ? <textarea id={question.key} value={answers[question.key] || ''} onChange={e => set(question.key, e.target.value)} placeholder={question.placeholder} className="input mt-3 min-h-[128px] resize-y text-sm" /> : <input id={question.key} value={answers[question.key] || ''} onChange={e => set(question.key, e.target.value)} placeholder={question.placeholder} className="input mt-3 text-sm" />}{question.ai ? <button type="button" disabled={suggesting !== null} onClick={() => void suggest(question)} className="mt-3 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 disabled:opacity-50">✦ {suggesting === question.key ? 'AI is writing…' : (answers[question.key] || '').trim() ? 'Improve with AI' : 'Suggest with AI'}</button> : null}</div>)}</div>{error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}<div className="mt-7 flex justify-between gap-3"><button className="btn-secondary" disabled={step === 0 || generating} onClick={() => { setError(null); setStep(x => Math.max(0, x - 1)); }}>← Back</button><button className="btn-primary min-w-36" disabled={generating} onClick={() => void next()}>{generating ? 'AI is creating your CV…' : step === sections.length - 1 ? 'Generate my CV ✦' : 'Save & continue →'}</button></div></div><p className="mt-4 text-center text-xs text-ink-400">Answers are saved · AI fills writing, never invents experience</p>{draftsOpen ? <DraftManagerPanel onClose={() => setDraftsOpen(false)} /> : null}</div>;
+  return <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">{tabs}<div className="mb-7 flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">OneClick AI CV Builder</p><h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">Complete one short section at a time</h1><p className="mt-2 text-sm text-ink-500">Three questions per section. Use AI whenever you are unsure.</p></div><button className="btn-secondary" onClick={() => setDraftsOpen(true)}>My drafts</button></div><div className="mb-5"><div className="flex justify-between text-xs font-medium text-ink-500"><span>Section {step + 1} of {sections.length}</span><span>{Math.round(progress)}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100"><div className="h-full rounded-full bg-brand-600" style={{ width: `${progress}%` }} /></div></div><div className="card p-5 sm:p-8"><div className="mb-6"><div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100 text-xl">✦</div><h2 className="text-xl font-bold sm:text-2xl">{section?.title}</h2><p className="mt-1 text-sm text-ink-500">{section?.description}</p></div><div className={`grid gap-5 ${questions.length === 1 ? 'mx-auto max-w-xl' : 'md:grid-cols-3'}`}>{questions.map(question => <div key={question.key} className="rounded-2xl border border-ink-100 bg-ink-50/50 p-4"><label htmlFor={question.key} className="text-sm font-bold">{question.label}{question.required ? <span className="ml-1 text-red-500">*</span> : null}</label><p className="mt-1 min-h-9 text-xs leading-relaxed text-ink-500">{question.help}</p>{question.inputType === 'photo' ? <div className="mt-3"><PhotoEditor /></div> : question.choices ? <div className="mt-3 flex flex-wrap gap-2">{question.choices.map(choice => <button key={choice} type="button" onClick={() => set(question.key, choice)} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${(answers[question.key] || '') === choice ? 'border-brand-500 bg-brand-50 text-brand-800' : 'border-ink-200 bg-white text-ink-600'}`}>{choice}</button>)}</div> : question.multiline ? <textarea id={question.key} value={question.inputType === 'month' && /present|current/i.test(answers[question.key] || '') ? '' : answers[question.key] || ''} disabled={question.inputType === 'month' && /present|current/i.test(answers[question.key] || '')} onChange={e => set(question.key, e.target.value)} placeholder={question.placeholder} className="input mt-3 min-h-[128px] resize-y text-sm" /> : <><input id={question.key} type={question.inputType === 'month' ? 'month' : 'text'} list={question.suggestions ? `${question.key}-options` : undefined} value={answers[question.key] || ''} onChange={e => set(question.key, e.target.value)} placeholder={question.placeholder} className="input mt-3 text-sm" />{question.suggestions ? <datalist id={`${question.key}-options`}>{question.suggestions.map(item => <option key={item} value={item} />)}</datalist> : null}{question.key === 'exp1End' || question.key === 'educationEnd' ? <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-brand-700"><input type="checkbox" checked={/present|current/i.test(answers[question.key] || '')} onChange={e => set(question.key, e.target.checked ? (question.key === 'educationEnd' ? 'Current' : 'Present') : '')} />{question.key === 'educationEnd' ? 'I am currently studying' : 'I currently work here'}</label> : null}</>}{question.ai ? <button type="button" disabled={suggesting !== null} onClick={() => void suggest(question)} className="mt-3 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-bold text-brand-700 disabled:opacity-50">✦ {suggesting === question.key ? 'AI is writing…' : (answers[question.key] || '').trim() ? 'Improve with AI' : 'Suggest with AI'}</button> : null}</div>)}</div>{error ? <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}<div className="mt-7 flex justify-between gap-3"><button className="btn-secondary" disabled={step === 0 || generating} onClick={() => { setError(null); setStep(x => Math.max(0, x - 1)); }}>← Back</button><button className="btn-primary min-w-36" disabled={generating} onClick={() => void next()}>{generating ? 'AI is creating your CV…' : step === sections.length - 1 ? 'Generate my CV ✦' : 'Save & continue →'}</button></div></div><p className="mt-4 text-center text-xs text-ink-400">Answers are saved · AI improves only the facts you provide</p>{draftsOpen ? <DraftManagerPanel onClose={() => setDraftsOpen(false)} /> : null}</div>;
 }
