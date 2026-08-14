@@ -11,7 +11,7 @@ import { useCVStore } from '@/lib/state/cvStore';
 import type { CVDocument, LanguageProficiency, TemplateId, VisaStatus } from '@/lib/cv/types';
 import { generateId } from '@/lib/utils/id';
 import { generateCoverLetter } from '@/lib/coverLetter/generator';
-import type { ProfessionId } from '@/lib/cv/professionProfiles';
+import { PROFESSION_PROFILES, type ProfessionId } from '@/lib/cv/professionProfiles';
 
 type Answers = Record<string, string>;
 type AIAction = 'create_summary' | 'improve_job_description' | 'generate_achievements' | 'add_skills';
@@ -43,7 +43,7 @@ const SECTIONS: Section[] = [
   { id: 'profile', title: 'Professional profile', description: 'Short answers are enough — AI will polish them.', questions: [
     q('background', 'Professional background', 'Mention years, work and industries.', { required: true, multiline: true, placeholder: '3 years managing social media, creating videos and running ads…', ai: ['create_summary', 'summary'] }),
     q('technicalSkills', 'Job-related skills', 'Only 6–8 relevant skills you genuinely use.', { required: true, multiline: true, placeholder: 'Figma, Responsive Design, HTML/CSS', ai: ['add_skills', 'skills'] }),
-    q('softSkills', 'Professional strengths', 'Only 4–6 qualities; do not repeat technical skills.', { multiline: true, placeholder: 'Communication, attention to detail, teamwork' }),
+    q('softSkills', 'Professional strengths', 'Only 4–6 qualities; do not repeat technical skills.', { multiline: true, placeholder: 'Communication, attention to detail, teamwork', ai: ['add_skills', 'skills'] }),
   ] },
   { id: 'role', title: 'Recent work experience', description: 'Freelance, internship and part-time work count too.', questions: [
     q('hasExperience', 'Do you have work experience?', 'Choose No for your first CV.', { required: true, choices: ['Yes', 'No'] }),
@@ -100,7 +100,7 @@ const SECTIONS: Section[] = [
   ] },
 ];
 
-const splitItems = (v = '') => v.split(/\n|,/).map(x => x.trim()).filter(Boolean);
+const splitItems = (v = '') => v.split(/\n|,/).map(x => x.trim().replace(/^[&,+;/\s]+/, '')).filter(Boolean);
 const splitLines = (v = '') => v.split(/\n|\s*[•▪]\s*/).map(x => x.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
 const dates = (v = '') => v.match(/\d{4}(?:-\d{2})?/g) ?? [];
 const uniqueLimited = (items: string[], limit: number) => {
@@ -185,7 +185,16 @@ export default function AICVInterview() {
   const section = sections[Math.min(step, sections.length - 1)]; const questions = section ? shown(section, answers) : [];
 
   useEffect(() => { hydrate(); }, [hydrate]);
-  useEffect(() => { try { const saved = localStorage.getItem('oneclickcv:interview-answers-v2'); if (saved) setAnswers({ cityCountry: 'Dubai, United Arab Emirates', ...JSON.parse(saved) }); } catch {} }, []);
+  useEffect(() => { try {
+    const saved = localStorage.getItem('oneclickcv:interview-answers-v2');
+    if (saved) {
+      const parsed = JSON.parse(saved) as Answers;
+      const technical = uniqueLimited(splitItems(parsed.technicalSkills), 8);
+      const technicalKeys = new Set(technical.map(item => item.toLowerCase()));
+      const soft = uniqueLimited(splitItems(parsed.softSkills), 6).filter(item => !technicalKeys.has(item.toLowerCase()));
+      setAnswers({ cityCountry: 'Dubai, United Arab Emirates', ...parsed, technicalSkills: technical.join(', '), softSkills: soft.join(', ') });
+    }
+  } catch {} }, []);
   useEffect(() => { if (hydrated) try { localStorage.setItem('oneclickcv:interview-answers-v2', JSON.stringify(answers)); } catch {} }, [answers, hydrated]);
   if (!hydrated) return <div className="flex h-[60vh] items-center justify-center"><div className="h-9 w-9 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" /></div>;
 
@@ -202,11 +211,26 @@ export default function AICVInterview() {
   async function suggest(question: Question) {
     if (!question.ai) return; setSuggesting(question.key); setError(null);
     const [action, field] = question.ai; const current = answers[question.key] || '';
+    const profile = PROFESSION_PROFILES[profession(answers.exp1Title || answers.professionalTitle || '')];
+    if (question.key === 'technicalSkills') {
+      set(question.key, uniqueLimited(profile.suggestedSkills, 8).join(', '));
+      setSuggesting(null); return;
+    }
+    if (question.key === 'softSkills') {
+      const technicalKeys = new Set(splitItems(answers.technicalSkills).map(item => item.toLowerCase()));
+      set(question.key, uniqueLimited(profile.suggestedSoftSkills, 6).filter(item => !technicalKeys.has(item.toLowerCase())).join(', '));
+      setSuggesting(null); return;
+    }
     const seed = current || [answers.background, answers.exp1Title, answers.exp1Company, answers.exp1Duties].filter(Boolean).join('. ') || `Truthful suggestions for a ${answers.professionalTitle || 'professional'} CV`;
     try {
       const result = await askAI({ action, field, text: seed, context: { profession: profession(answers.exp1Title || answers.professionalTitle || ''), professionalTitle: answers.exp1Title || answers.professionalTitle || '', existingSkills: splitItems(answers.technicalSkills), targetJob: answers.jobRequirements ? { positionTitle: answers.professionalTitle || '', company: answers.targetCompany || undefined, summary: answers.jobRequirements } : undefined } });
       const value = result?.suggestedItems?.length ? result.suggestedItems.join(field === 'skills' ? ', ' : '\n') : result?.suggestedText;
-      if (value) set(question.key, value); else setError('Add one short fact first, then AI can improve it.');
+      if (value) set(question.key, value);
+      else if (question.key === 'background') {
+        const title = answers.professionalTitle || profile.label;
+        const skills = uniqueLimited(splitItems(answers.technicalSkills).length ? splitItems(answers.technicalSkills) : profile.suggestedSkills, 4);
+        set(question.key, `${title} with practical capability in ${skills.join(', ')}. Focused on quality, clear communication and reliable delivery, with an adaptable approach to supporting team and business goals.`);
+      } else setError('Add one short fact first, then AI can improve it.');
     } catch { setError('AI suggestion is temporarily unavailable. You can continue normally.'); }
     setSuggesting(null);
   }
