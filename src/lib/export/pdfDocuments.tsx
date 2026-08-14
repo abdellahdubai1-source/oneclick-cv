@@ -35,8 +35,11 @@ function contentWeight(cv: CVDocument): number {
 
 export function getPdfLayoutScale(cv: CVDocument): LayoutScale {
   const weight = contentWeight(cv);
-  if (weight < 18) return { sectionGap: 21, bodySize: 11, bodyLineHeight: 1.62, entryGap: 13 };
-  if (weight < 24) return { sectionGap: 15, bodySize: 10.25, bodyLineHeight: 1.52, entryGap: 10 };
+  // Sparse CVs use the page confidently instead of leaving a large empty
+  // lower half. Dense CVs stay compact so they remain one-page friendly.
+  if (weight < 12) return { sectionGap: 27, bodySize: 11.8, bodyLineHeight: 1.7, entryGap: 16 };
+  if (weight < 20) return { sectionGap: 22, bodySize: 11.2, bodyLineHeight: 1.62, entryGap: 13 };
+  if (weight < 26) return { sectionGap: 15, bodySize: 10.25, bodyLineHeight: 1.52, entryGap: 10 };
   return { sectionGap: 11, bodySize: 9.25, bodyLineHeight: 1.42, entryGap: 7 };
 }
 
@@ -165,7 +168,7 @@ function SingleColumnDocument({ cv, variant }: { cv: CVDocument; variant: 'execu
   const styles = makeSharedStyles(color);
   const sections = getVisibleSections(cv);
   const scale = getPdfLayoutScale(cv);
-  const sparse = contentWeight(cv) < 18;
+  const sparse = contentWeight(cv) < 20;
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
 
   const headerBg = variant === 'ats' ? '#ffffff' : color.primary;
@@ -238,7 +241,7 @@ function TwoRegionDocument({ cv, variant }: { cv: CVDocument; variant: 'sidebar'
   const main = sections.filter((s) => !railSections.includes(s));
   const photoSrc = cv.personal.photoEnabled ? cv.photo.processedDataUrl : null;
   const scale = getPdfLayoutScale(cv);
-  const sparse = contentWeight(cv) < 18;
+  const sparse = contentWeight(cv) < 20;
 
   if (variant === 'sidebar') {
     return (

@@ -46,4 +46,29 @@ describe('AI CV interview data mapping', () => {
     expect(cv.experience).toEqual([]);
     expect(cv.education).toEqual([]);
   });
+
+  it('maps grouped section answers and automatically selects a role-appropriate template', () => {
+    const cv = buildCVFromInterview(createEmptyCV('Grouped CV'), {
+      fullName: 'Samira Ali',
+      professionalTitle: 'Digital Marketing Specialist',
+      cityCountry: 'Dubai, United Arab Emirates',
+      links: 'https://linkedin.com/in/samira\nhttps://samira.example.com',
+      hasExperience: 'Yes',
+      exp1Title: 'Marketing Executive',
+      exp1Company: 'Example LLC',
+      exp1Dates: '2022 to Current',
+      exp1Duties: 'Planned campaigns\nCreated social content',
+      hasEducation: 'No',
+      technicalSkills: 'Meta Ads, SEO',
+      languages: 'English — Fluent',
+    });
+
+    expect(cv.personal.city).toBe('Dubai');
+    expect(cv.personal.country).toBe('United Arab Emirates');
+    expect(cv.personal.linkedInUrl).toContain('linkedin.com');
+    expect(cv.personal.portfolioUrl).toContain('samira.example.com');
+    expect(cv.experience[0]?.startDate).toBe('2022');
+    expect(cv.experience[0]?.currentlyWorking).toBe(true);
+    expect(cv.template.templateId).toBe('blue-line-ats');
+  });
 });
