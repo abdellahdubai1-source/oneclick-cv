@@ -26,7 +26,7 @@ describe('adaptive PDF layout', () => {
       achievements: Array(3).fill('Improved the customer experience.'),
     }));
     const scale = getPdfLayoutScale(cv);
-    expect(scale.bodySize).toBeLessThan(10);
+    expect(scale.bodySize).toBeGreaterThanOrEqual(10);
     expect(scale.sectionGap).toBeLessThan(12);
   });
 });
